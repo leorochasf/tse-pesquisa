@@ -1,72 +1,89 @@
 # Ferramenta TSE
 
-Consulta automatizada de eleitos, suplentes e mandatos municipais a partir dos
-dados abertos do TSE — sem automação de navegador.
+Consulta de eleitos, suplentes e mandatos municipais de Goiás a partir dos dados abertos do TSE.
 
-## Pré-requisitos
+---
 
-```
-Python 3.11+
-pip install -r requirements.txt
-```
+## Como usar (assessores)
 
-## Fluxo de uso
+Acesse o link abaixo — não precisa instalar nada:
 
-### 1. Importar dados
+**[https://tse-pesquisa-nx9ugomzvysocnqzty96g6.streamlit.app](https://tse-pesquisa-nx9ugomzvysocnqzty96g6.streamlit.app)**
 
-```bash
-python cli.py ingest --anos 2024
-# Para múltiplos anos:
-python cli.py ingest --anos 2016 2020 2024
-```
+### Pesquisar eleitos de um município
 
-Baixa `consulta_cand_AAAA.zip` do TSE, extrai apenas GO e popula `tse_core/dados/tse.sqlite`.
-O download é cacheado localmente (pasta `cache/`); reimportar o mesmo ano é idempotente.
+1. Selecione o **Ano** da eleição (ex: 2024)
+2. Selecione o **Município** (ex: INACIOLÂNDIA)
+3. Selecione o **Cargo** (Vereador ou Prefeito)
+4. Clique em **Pesquisar**
+5. Os eleitos aparecem destacados na tabela
+6. Clique em **⬇️ Baixar Excel** para exportar
 
-### 2. Listar candidatos
+### Rastrear mandatos de uma pessoa
 
-```bash
-python cli.py listar --municipio "Inaciolândia" --cargo vereador --ano 2024
-python cli.py listar --municipio "Goiânia" --cargo prefeito --ano 2024 --excel resultado.xlsx
-```
+1. Clique em **Rastrear mandatos**
+2. Selecione o **Município** e o **Cargo**
+3. Digite o **Nome** (parcial ou completo, ex: CLAUDIO HENRIQUE)
+4. Clique em **Rastrear**
+5. A linha do tempo mostra cada eleição, partido, período do mandato e se houve reeleição
 
-### 3. Rastrear pessoa entre eleições
+> Se aparecer um aviso de "múltiplos candidatos", use o nome completo para refinar.
 
-```bash
-python cli.py rastrear --nome "FULANO DE TAL" --municipio "Inaciolândia" --cargo vereador
-```
+---
 
-Retorna linha do tempo de mandatos (início/fim) e flag de reeleição.
+## Atualizar os dados (admin)
 
-## Estrutura do projeto
+Os dados cobrem as eleições de **2016, 2020 e 2024**. Para importar um ano novo:
+
+1. Abra a **barra lateral** (seta `>` no canto superior esquerdo)
+2. Digite a senha de admin
+3. Selecione o ano e clique em **⬆️ Atualizar dados do TSE**
+4. O download do TSE leva alguns minutos; ao finalizar, os dados ficam disponíveis para todos
+
+---
+
+## Estrutura do projeto (desenvolvedores)
 
 ```
 FerramentaTSE/
-├─ tse_core/          # Motor de consulta (reusado pela skill /tse)
-│  ├─ db.py          # Schema SQLite
-│  ├─ ingest.py      # Download e importação dos CSVs
-│  ├─ consulta.py    # listar() e rastrear()
-│  ├─ mandato.py     # Inferência de mandatos
-│  └─ dados/
-│     ├─ cargos.py   # Mapa código↔nome de cargo
-│     └─ tse.sqlite  # Base local (gerada via ingest; não versionada)
-├─ cli.py            # Interface de linha de comando
-├─ docs/             # Plano de viabilidade e etapas de implementação
-└─ requirements.txt
+├─ tse_core/           # Motor de consulta
+│  ├─ db.py            # SQLite + suporte a TSE_DB_PATH
+│  ├─ ingest.py        # Download e importação dos CSVs do TSE
+│  ├─ consulta.py      # listar(), rastrear(), listar_municipios(), listar_anos()
+│  ├─ mandato.py       # Inferência de mandatos e reeleição
+│  ├─ export.py        # gerar_excel() → bytes
+│  └─ dados/cargos.py  # Mapa código↔nome de cargo
+├─ app.py              # App Streamlit (web)
+├─ cli.py              # CLI: ingest / listar / rastrear
+├─ scripts/
+│  └─ seed_storage.py  # Upload inicial do sqlite para o Supabase Storage
+├─ .streamlit/
+│  └─ secrets.toml     # Credenciais locais (não versionado)
+├─ requirements.txt
+└─ docs/               # Planos de implementação
 ```
 
-## Estado das etapas
+### Rodar localmente
 
-| Etapa | Status | Descrição |
-|-------|--------|-----------|
-| 0 | ✅ | Scaffolding e schema SQLite |
-| 1 | pendente | Ingest do CSV oficial do TSE |
-| 2 | pendente | Consulta "listar" (núcleo) |
-| 3 | pendente | CLI listar + exportação Excel/CSV |
-| 4 | pendente | Rastrear pessoa + inferência de mandato |
-| 5 | pendente | Skill /tse no AssessorIA |
+```bash
+pip install -r requirements.txt
+python cli.py ingest --anos 2024
+streamlit run app.py
+```
 
-## Fonte dos dados
+### Etapas concluídas
+
+| Etapa | Descrição |
+|-------|-----------|
+| 0–5 | Motor tse_core + CLI (ingest, listar, rastrear, mandatos) |
+| 7.0 | Refatorações para web (TSE_DB_PATH, export.py, listar_municipios/anos) |
+| 7.1 | App Streamlit — modo Listar |
+| 7.2 | App Streamlit — modo Rastrear |
+| 7.3 | Persistência via Supabase Storage + botão Atualizar |
+| 7.4 | Deploy no Streamlit Community Cloud |
+| 7.5 | Documentação |
+
+### Fonte dos dados
 
 TSE Dados Abertos — `consulta_cand`:
 `https://cdn.tse.jus.br/estatistica/sead/odsele/consulta_cand/consulta_cand_AAAA.zip`

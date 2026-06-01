@@ -74,7 +74,7 @@ da ferramenta, protegido por senha.
 
 ---
 
-## Etapa 7.4 — Deploy no Streamlit Community Cloud
+## ✅ Etapa 7.4 — Deploy no Streamlit Community Cloud
 **Objetivo:** link público no ar.
 - `git init` + repo **público** no GitHub (só código; `.sqlite`, `cache/`,
   `.streamlit/secrets.toml` gitignored). Conferir `.gitignore`.
@@ -86,7 +86,7 @@ da ferramenta, protegido por senha.
 
 ---
 
-## Etapa 7.5 — Documentação para assessores
+## ✅ Etapa 7.5 — Documentação para assessores
 **Objetivo:** onboarding sem fricção.
 - `README.md`: registrar a Etapa 7, o link público e uma seção curta
   **"Como usar (assessores)"** em linguagem não-técnica (passo a passo com prints
