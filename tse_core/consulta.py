@@ -197,5 +197,5 @@ def rastrear(
         "cargo": cargo.upper(),
         "anos_pesquisados": anos_busca,
         "anos": resultados,
-        "homonimos": sorted(nomes_encontrados) if len(nomes_encontrados) > 1 else [],
+        "homonimos": sorted(nomes_encontrados) if len({_normalizar(n) for n in nomes_encontrados}) > 1 else [],
     }

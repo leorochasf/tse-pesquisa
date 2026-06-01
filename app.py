@@ -8,6 +8,7 @@ from pathlib import Path
 
 import streamlit as st
 
+import ui
 from tse_core.consulta import listar, listar_anos, listar_municipios
 from tse_core.export import gerar_excel
 
@@ -15,7 +16,6 @@ from tse_core.export import gerar_excel
 # ─── Boot: sincroniza sqlite do Supabase Storage ──────────────────────────────
 
 def _storage_configured() -> bool:
-    """Retorna True só se ambas as chaves estiverem preenchidas (não placeholder)."""
     if "SUPABASE_URL" not in st.secrets or "SUPABASE_KEY" not in st.secrets:
         return False
     return "PREENCHA" not in st.secrets["SUPABASE_KEY"]
@@ -23,10 +23,6 @@ def _storage_configured() -> bool:
 
 @st.cache_resource
 def _init_db() -> str | None:
-    """
-    Se Supabase estiver configurado, baixa o tse.sqlite do Storage para /tmp
-    e seta TSE_DB_PATH. Retorna o caminho local ou None (usa banco padrão).
-    """
     if not _storage_configured():
         return None
     try:
@@ -43,15 +39,12 @@ def _init_db() -> str | None:
         return None
 
 
-# ─── Cabeçalho (deve ser o primeiro comando Streamlit) ────────────────────────
+# ─── Configuração de página ───────────────────────────────────────────────────
 
 st.set_page_config(page_title="Ferramenta TSE", page_icon="🗳️", layout="centered")
 
+ui.inject_css()
 _init_db()
-
-st.title("🗳️ Ferramenta TSE")
-st.caption("Consulta de eleitos e mandatos — Goiás")
-
 
 # ─── Sidebar admin ────────────────────────────────────────────────────────────
 
@@ -61,10 +54,10 @@ def _supabase_client():
 
 
 with st.sidebar:
-    st.subheader("⚙️ Admin")
+    st.markdown('<div class="tse-sidebar-title">Administração</div>', unsafe_allow_html=True)
     if not _storage_configured():
         st.caption("Storage não configurado. Preencha `SUPABASE_KEY` em secrets.toml.")
-    senha = st.text_input("Senha", type="password", key="admin_senha")
+    senha = st.text_input("Senha de acesso", type="password", key="admin_senha")
     admin_ok = (
         _storage_configured()
         and "ADMIN_PASSWORD" in st.secrets
@@ -74,8 +67,10 @@ with st.sidebar:
         st.error("Senha incorreta ou Storage não configurado.")
     if admin_ok:
         st.success("Autenticado")
-        ano_upd = st.number_input("Ano para importar", min_value=2000, max_value=2030, value=2024, step=4)
-        if st.button("⬆️ Atualizar dados do TSE"):
+        ano_upd = st.number_input(
+            "Ano para importar", min_value=2000, max_value=2030, value=2024, step=4
+        )
+        if st.button("Atualizar dados do TSE", type="primary"):
             db_path = os.environ.get("TSE_DB_PATH") or None
             with st.spinner(f"Importando {ano_upd}/GO do TSE..."):
                 from tse_core.ingest import importar
@@ -83,10 +78,13 @@ with st.sidebar:
             st.sidebar.success(f"{total} registros importados.")
             with st.spinner("Enviando ao Storage..."):
                 try:
-                    path = db_path or str(Path(__file__).parent / "tse_core" / "dados" / "tse.sqlite")
+                    path = db_path or str(
+                        Path(__file__).parent / "tse_core" / "dados" / "tse.sqlite"
+                    )
                     data = Path(path).read_bytes()
                     _supabase_client().storage.from_("tse-data").upload(
-                        "tse.sqlite", data,
+                        "tse.sqlite",
+                        data,
                         {"upsert": "true", "content-type": "application/octet-stream"},
                     )
                     st.sidebar.success("Storage atualizado.")
@@ -94,13 +92,24 @@ with st.sidebar:
                 except Exception as e:
                     st.sidebar.error(f"Erro no upload: {e}")
 
-modo = st.radio("Modo", ["Listar candidatos", "Rastrear mandatos"], horizontal=True)
+# ─── Header ───────────────────────────────────────────────────────────────────
 
-# ─── Listar ───────────────────────────────────────────────────────────────────
-if modo == "Listar candidatos":
+ui.header()
+
+# ─── Abas ─────────────────────────────────────────────────────────────────────
+
+tab_listar, tab_rastrear = st.tabs(["Listar candidatos", "Rastrear mandatos"])
+
+
+# ─── Aba: Listar ──────────────────────────────────────────────────────────────
+
+with tab_listar:
     anos = listar_anos("GO")
     if not anos:
-        st.warning("Nenhum dado importado. Rode `python cli.py ingest --anos 2024 --uf GO` primeiro.")
+        ui.callout(
+            "Nenhum dado importado. Rode <code>python cli.py ingest --anos 2024 --uf GO</code> primeiro.",
+            kind="warn",
+        )
         st.stop()
 
     col1, col2, col3 = st.columns(3)
@@ -122,7 +131,7 @@ if modo == "Listar candidatos":
         eleitos = [c for c in candidatos if c["eleito"]]
         nao_eleitos = [c for c in candidatos if not c["eleito"]]
 
-        st.success(f"**{len(eleitos)} eleito(s)** · {len(nao_eleitos)} não eleito(s)/suplente(s)")
+        ui.metric_cards(len(eleitos), len(nao_eleitos))
 
         import pandas as pd
 
@@ -146,21 +155,26 @@ if modo == "Listar candidatos":
                 st.dataframe(_df(nao_eleitos), use_container_width=True, hide_index=True)
 
         st.download_button(
-            label="⬇️ Baixar Excel",
+            label="Baixar Excel",
             data=gerar_excel(candidatos),
             file_name=f"TSE_{ano}_{municipio}_{cargo}.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         )
 
-# ─── Rastrear ─────────────────────────────────────────────────────────────────
-else:
+
+# ─── Aba: Rastrear ────────────────────────────────────────────────────────────
+
+with tab_rastrear:
     import pandas as pd
     from tse_core.consulta import rastrear
     from tse_core.mandato import inferir_mandatos
 
     municipios_todos = listar_municipios("GO")
     if not municipios_todos:
-        st.warning("Nenhum dado importado. Rode `python cli.py ingest --anos 2024 --uf GO` primeiro.")
+        ui.callout(
+            "Nenhum dado importado. Rode <code>python cli.py ingest --anos 2024 --uf GO</code> primeiro.",
+            kind="warn",
+        )
         st.stop()
 
     with st.form("rastrear_form"):
@@ -169,12 +183,14 @@ else:
             municipio_r = st.selectbox("Município", municipios_todos, key="mun_r")
         with col2:
             cargo_r = st.selectbox("Cargo", ["Prefeito", "Vereador"], key="cargo_r")
-        nome_r = st.text_input("Nome (parcial ou completo)", placeholder="Ex: CLAUDIO HENRIQUE")
+        nome_r = st.text_input(
+            "Nome do candidato", placeholder="Ex: CLAUDIO HENRIQUE (parcial ou completo)"
+        )
         submitted = st.form_submit_button("Rastrear", type="primary")
 
     if submitted:
         if not nome_r.strip():
-            st.error("Informe ao menos parte do nome.")
+            ui.callout("Informe ao menos parte do nome.", kind="warn")
             st.stop()
 
         try:
@@ -184,37 +200,34 @@ else:
             st.stop()
 
         if resultado["homonimos"]:
-            st.warning(
-                "**Múltiplos candidatos encontrados com nome similar** — "
-                "use o nome completo para refinar:\n\n" +
-                "\n".join(f"- {n}" for n in resultado["homonimos"])
+            nomes = "<br>".join(f"&bull; {n}" for n in resultado["homonimos"])
+            ui.callout(
+                f"<strong>Múltiplos candidatos encontrados</strong> — use o nome completo "
+                f"para refinar:<br><br>{nomes}",
+                kind="warn",
             )
 
         if not resultado["anos"]:
-            st.info(f"Nenhum registro encontrado para '{nome_r}' em {municipio_r}/{cargo_r}.")
+            ui.callout(
+                f"Nenhum registro encontrado para <strong>{nome_r}</strong> "
+                f"em {municipio_r} / {cargo_r}.",
+                kind="info",
+            )
             st.stop()
 
         inf = inferir_mandatos(resultado)
 
-        if inf["mandatos"]:
-            st.subheader("Linha do tempo de mandatos")
-            rows = []
-            for m in inf["mandatos"]:
-                rows.append({
-                    "Eleição": m.ano_eleicao,
-                    "Partido": m.partido or "",
-                    "Mandato": f"{m.inicio}–{m.fim}",
-                    "Reeleição": "✅" if m.reeleicao else "—",
-                })
-            st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
-        else:
-            st.info("Nenhum mandato registrado.")
+        st.subheader("Linha do tempo de mandatos")
+        ui.timeline(inf["mandatos"])
 
         if inf["suplencias"]:
             with st.expander(f"Suplências ({len(inf['suplencias'])})"):
                 st.dataframe(
-                    pd.DataFrame(inf["suplencias"]).rename(columns={"ano": "Ano", "partido": "Partido"}),
-                    use_container_width=True, hide_index=True,
+                    pd.DataFrame(inf["suplencias"]).rename(
+                        columns={"ano": "Ano", "partido": "Partido"}
+                    ),
+                    use_container_width=True,
+                    hide_index=True,
                 )
 
         if inf["sem_eleicao"]:
@@ -223,5 +236,12 @@ else:
                     pd.DataFrame(inf["sem_eleicao"]).rename(
                         columns={"ano": "Ano", "situacao": "Situação", "partido": "Partido"}
                     ),
-                    use_container_width=True, hide_index=True,
+                    use_container_width=True,
+                    hide_index=True,
                 )
+
+
+# ─── Rodapé ───────────────────────────────────────────────────────────────────
+
+anos_disponiveis = listar_anos("GO")
+ui.footer(anos_disponiveis if anos_disponiveis else None)
