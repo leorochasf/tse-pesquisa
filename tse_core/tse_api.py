@@ -54,7 +54,8 @@ def buscar_ficha(ano: int, municipio: str, sq: str) -> dict:
     ano = int(ano)
     cd_eleicao = CD_ELEICAO_DIVULGA.get(ano)
     if not cd_eleicao:
-        return {"ano": ano, "total_bens": None, "bens": [], "divulga_bens": False}
+        return {"ano": ano, "total_bens": None, "bens": [], "divulga_bens": False,
+                "situacao_registro": None, "situacao_candidato": None, "motivos": []}
 
     cache_path = os.path.join(_CACHE_FICHA, f"{ano}_{municipio}_{sq}.json")
     d = None
@@ -81,9 +82,14 @@ def buscar_ficha(ano: int, municipio: str, sq: str) -> dict:
         }
         for b in (d.get("bens") or [])
     ]
+    # Motivos de indeferimento/cassação — deduplicados preservando ordem.
+    motivos = list(dict.fromkeys(m for m in (d.get("motivos") or []) if m))
     return {
         "ano": ano,
         "total_bens": d.get("totalDeBens"),
         "bens": bens,
         "divulga_bens": bool(d.get("st_DIVULGA_BENS")),
+        "situacao_registro": d.get("descricaoSituacao"),
+        "situacao_candidato": d.get("descricaoSituacaoCandidato"),
+        "motivos": motivos,
     }

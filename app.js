@@ -277,8 +277,29 @@ function formatBRL(v) {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(v);
 }
 
-function renderPatrimonio(fichas) {
+function fotoUrl(ano, sq, cdMun) {
+  const cd = _TSE_CD[ano];
+  return (cd && sq && cdMun) ? `${_TSE_BASE}rest/arquivo/img/${cd}/${sq}/${cdMun}` : '';
+}
+
+function temRestricao(f) {
+  return (f.motivos && f.motivos.length) || (f.situacao_registro && f.situacao_registro !== 'Deferido');
+}
+
+function renderFicha(fichas) {
   const fs = [...fichas].sort((a, b) => a.ano - b.ano);
+
+  // Resumo de restrições (indeferida / cassada / etc.) com os motivos
+  const restricoes = fs.filter(temRestricao);
+  let alertaHtml = '';
+  if (restricoes.length) {
+    const itens = restricoes.map(f => {
+      const mot = (f.motivos && f.motivos.length) ? `: ${f.motivos.join('; ')}` : '';
+      return `&bull; <strong>${f.ano}</strong> — ${f.situacao_registro || 'Com restrição'}${mot}`;
+    }).join('<br>');
+    alertaHtml = `<div class="tse-callout tse-callout-warn"><strong>⚠ Candidatura(s) com restrição</strong><br>${itens}</div>`;
+  }
+
   let prev = null;
   const linhas = fs.map(f => {
     let deltaHtml = '';
@@ -292,6 +313,15 @@ function renderPatrimonio(fichas) {
     const valorTxt = f.total_bens != null
       ? formatBRL(f.total_bens)
       : (f.divulga_bens === false ? 'Não divulgado' : 'Não declarou bens');
+
+    let sitHtml = '';
+    if (temRestricao(f)) {
+      const sit = `${f.situacao_registro || 'Com restrição'}${f.situacao_candidato ? ` — ${f.situacao_candidato}` : ''}`;
+      const mot = (f.motivos && f.motivos.length)
+        ? `<div class="tse-motivos">${f.motivos.map(m => `<span class="tse-motivo">${m}</span>`).join('')}</div>` : '';
+      sitHtml = `<div class="tse-ficha-sit">${sit}${mot}</div>`;
+    }
+
     const bensList = f.bens.length ? `
       <details class="tse-bens">
         <summary>${f.bens.length} bem(ns) declarado(s)</summary>
@@ -299,20 +329,22 @@ function renderPatrimonio(fichas) {
       </details>` : '';
 
     return `
-      <div class="tse-pat-linha">
+      <div class="tse-pat-linha${temRestricao(f) ? ' tse-pat-linha-restr' : ''}">
         <div class="tse-pat-cab">
           <span class="tse-pat-ano">${f.ano}</span>
           <span class="tse-pat-valor">${valorTxt}</span>
           ${deltaHtml}
         </div>
+        ${sitHtml}
         ${bensList}
       </div>`;
   }).join('');
 
   return `
-    <h4 class="tse-pat-title">Evolução patrimonial (bens declarados)</h4>
+    <h4 class="tse-pat-title">Ficha do candidato (situação e bens)</h4>
+    ${alertaHtml}
     <div class="tse-pat">${linhas}</div>
-    <p class="tse-pat-fonte">Fonte: ficha do candidato no DivulgaCandContas (TSE). Valores conforme declaração de cada eleição.</p>`;
+    <p class="tse-pat-fonte">Fonte: ficha do candidato no DivulgaCandContas (TSE). Situação e bens conforme cada eleição.</p>`;
 }
 
 async function carregarPatrimonio(data, btn) {
@@ -320,7 +352,7 @@ async function carregarPatrimonio(data, btn) {
   btn.disabled = true;
   panel.innerHTML = '';
   panel.appendChild(spinner());
-  panel.appendChild(document.createTextNode(' Consultando bens declarados no TSE…'));
+  panel.appendChild(document.createTextNode(' Consultando ficha no TSE (situação e bens)…'));
 
   // Candidaturas da pessoa (ano + município + sq), sem duplicatas e com sq válido
   const cands = [];
@@ -334,7 +366,7 @@ async function carregarPatrimonio(data, btn) {
     const fichas = await Promise.all(
       unicos.map(c => apiFetch({ action: 'ficha', ano: c.ano, municipio: c.mun, sq: c.sq }))
     );
-    panel.innerHTML = renderPatrimonio(fichas);
+    panel.innerHTML = renderFicha(fichas);
   } catch (err) {
     panel.innerHTML = '';
     panel.appendChild(callout('Não foi possível consultar os bens no TSE agora. Tente novamente em instantes.', 'erro'));
@@ -378,19 +410,29 @@ document.getElementById('form-rastrear').addEventListener('submit', async e => {
       return;
     }
 
-    // CPF da pessoa
-    if (data.cpf) {
-      out.innerHTML += `<p class="tse-cpf">CPF: <strong>${formatCpf(data.cpf)}</strong></p>`;
+    // Cabeçalho: foto (candidatura mais recente) + CPF
+    const todas = [
+      ...data.mandatos.map(m => ({ ano: m.ano_eleicao, mun: m.cd_municipio, sq: m.sq_candidato })),
+      ...data.suplencias.map(s => ({ ano: s.ano, mun: s.cd_municipio, sq: s.sq_candidato })),
+      ...data.sem_eleicao.map(s => ({ ano: s.ano, mun: s.cd_municipio, sq: s.sq_candidato })),
+    ].filter(c => c.sq && c.mun).sort((a, b) => b.ano - a.ano);
+    const foto = todas.length ? fotoUrl(todas[0].ano, todas[0].sq, todas[0].mun) : '';
+    if (foto || data.cpf) {
+      out.innerHTML += `
+        <div class="tse-ficha-head">
+          ${foto ? `<img class="tse-foto" src="${foto}" alt="Foto do candidato" onerror="this.style.display='none'">` : ''}
+          ${data.cpf ? `<span class="tse-cpf">CPF: <strong>${formatCpf(data.cpf)}</strong></span>` : ''}
+        </div>`;
     }
 
     // Timeline unificada (eleito / suplente / não eleito)
     out.innerHTML += `<h3 class="tse-subhead">Linha do tempo de candidaturas</h3>`;
     out.innerHTML += renderTimeline(data);
 
-    // Patrimônio (sob demanda)
+    // Ficha (situação + bens) — sob demanda
     out.innerHTML += `
       <div class="tse-patrimonio-wrap">
-        <button type="button" class="btn-outline" id="btn-patrimonio">📊 Ver evolução patrimonial</button>
+        <button type="button" class="btn-outline" id="btn-patrimonio">📋 Ver ficha (situação + bens)</button>
         <div id="patrimonio-out"></div>
       </div>`;
     const btnPat = document.getElementById('btn-patrimonio');

@@ -487,14 +487,56 @@ details[open] summary::before { content: '▼ '; }
   box-shadow: 0 0 0 2px var(--muted);
 }
 
-/* ── CPF da pessoa ─────────────────────────────────────── */
+/* ── Cabeçalho da ficha (foto + CPF) ───────────────────── */
+.tse-ficha-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: .25rem 0 .75rem;
+}
+
+.tse-foto {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  flex-shrink: 0;
+}
+
 .tse-cpf {
   font-size: .85rem;
   color: var(--muted);
-  margin: .25rem 0 .5rem;
   font-feature-settings: "tnum";
 }
 .tse-cpf strong { color: var(--ink); }
+
+/* ── Situação/motivos na ficha (restrições) ────────────── */
+.tse-pat-linha-restr { border-left: 3px solid var(--accent); }
+
+.tse-ficha-sit {
+  font-size: .8rem;
+  color: #8B4500;
+  margin-top: 4px;
+}
+
+.tse-motivos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.tse-motivo {
+  background: #FEF3E6;
+  color: #8B4500;
+  border: 1px solid #F5D59A;
+  border-radius: 3px;
+  padding: 2px 8px;
+  font-size: .72rem;
+  font-weight: 600;
+}
 
 /* ── Evolução patrimonial ─────────────────────────────── */
 .tse-patrimonio-wrap { margin-top: 1rem; }
