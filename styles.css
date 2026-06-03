@@ -512,6 +512,27 @@ details[open] summary::before { content: '▼ '; }
 }
 .tse-cpf strong { color: var(--ink); }
 
+/* ── Prescrição (estimativa) ───────────────────────────── */
+.tse-presc {
+  font-size: .78rem;
+  color: var(--muted);
+  margin-top: 6px;
+}
+
+.tse-presc-prescrito {
+  color: #8B4500;
+  font-weight: 600;
+}
+
+.tse-presc-verif { color: var(--muted); }
+
+.tse-presc-aviso {
+  font-size: .72rem;
+  color: var(--muted);
+  margin: .4rem 0 0;
+  font-style: italic;
+}
+
 /* ── Situação/motivos na ficha (restrições) ────────────── */
 .tse-pat-linha-restr { border-left: 3px solid var(--accent); }
 

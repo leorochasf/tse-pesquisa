@@ -208,6 +208,17 @@ document.getElementById('form-listar').addEventListener('submit', async e => {
 
 // ── Aba: Rastrear ─────────────────────────────────────────────────────────────
 
+function renderPrescricao(p) {
+  if (!p) return '';
+  if (p.status === 'prescrito')
+    return `<div class="tse-presc tse-presc-prescrito">⚠ Prescrição provável (≈${p.ref_ano})</div>`;
+  if (p.status === 'no_prazo')
+    return `<div class="tse-presc">Prazo prescricional até ≈${p.ref_ano}</div>`;
+  if (p.status === 'verificar')
+    return `<div class="tse-presc tse-presc-verif">Prescrição: verificar (nova LIA)</div>`;
+  return '';
+}
+
 function renderTimeline(data) {
   const anoAtual = new Date().getFullYear();
 
@@ -218,6 +229,7 @@ function renderTimeline(data) {
     sq: m.sq_candidato, cdMun: m.cd_municipio,
     inicio: m.inicio, fim: m.fim, reeleicao: m.reeleicao,
     atual: anoAtual >= m.inicio && anoAtual <= m.fim,
+    presc: m.prescricao,
   }));
   data.suplencias.forEach(s => eventos.push({
     tipo: 'suplente', ano: s.ano, partido: s.partido,
@@ -247,6 +259,7 @@ function renderTimeline(data) {
           <div class="tse-tl-card${ev.atual ? ' tse-tl-card-atual' : ''}">
             <div class="tse-tl-ano">Eleição ${ev.ano}${reeleicaoHtml}${atualHtml}</div>
             <div class="tse-tl-row">${partidoHtml}<span class="tse-tl-periodo">${ev.inicio}&ndash;${ev.fim}</span></div>
+            ${renderPrescricao(ev.presc)}
             ${tseLink}
           </div>
         </div>`;
@@ -268,7 +281,11 @@ function renderTimeline(data) {
         </div>
       </div>`;
   }).join('');
-  return `<div class="tse-timeline">${items}</div>`;
+  const temPresc = data.mandatos.some(m => m.prescricao);
+  const aviso = temPresc
+    ? `<p class="tse-presc-aviso">Prescrição: estimativa (5 anos do fim do mandato; reeleição conta do último; LIA pré-2021). Confirmar caso a caso.</p>`
+    : '';
+  return `<div class="tse-timeline">${items}</div>${aviso}`;
 }
 
 // Busca os motivos das candidaturas com restrição e injeta nos cards.

@@ -8,7 +8,8 @@ Regras municipais:
 - Suplentes: sinalizados, sem mandato inferido.
 """
 
-from dataclasses import dataclass
+import datetime
+from dataclasses import dataclass, field
 
 
 @dataclass
@@ -20,6 +21,42 @@ class Mandato:
     partido: str | None
     sq_candidato: str | None
     cd_municipio: str | None
+    prescricao: dict | None = field(default=None)
+
+
+def _calcular_prescricao(mandatos: list["Mandato"]) -> None:
+    """
+    Estimativa de prescrição da improbidade (LIA), preenchida em cada Mandato.
+
+    Regra: 5 anos do término do mandato; em reeleição, conta do fim do ÚLTIMO
+    mandato consecutivo (bloco). Como não sabemos a data do ato, só conclui
+    quando o bloco encerrou até 2020 (ato necessariamente anterior à nova LIA):
+      - fim_bloco <= 2020 -> 'prescrito' se ano_atual > fim_bloco+5, senão 'no_prazo' (ref = fim_bloco+5)
+      - fim_bloco >= 2021 -> 'verificar' (nova LIA: 8 anos do fato, que não temos)
+    """
+    if not mandatos:
+        return
+    ano_atual = datetime.date.today().year
+    ordenados = sorted(mandatos, key=lambda m: m.ano_eleicao)
+
+    # Agrupa em blocos consecutivos (reeleicao=True => mesmo bloco do anterior).
+    blocos: list[list[Mandato]] = []
+    for m in ordenados:
+        if m.reeleicao and blocos:
+            blocos[-1].append(m)
+        else:
+            blocos.append([m])
+
+    for bloco in blocos:
+        fim_bloco = max(m.fim for m in bloco)
+        if fim_bloco <= 2020:
+            ref = fim_bloco + 5
+            status = "prescrito" if ano_atual > ref else "no_prazo"
+            info = {"status": status, "ref_ano": ref, "fim_bloco": fim_bloco}
+        else:
+            info = {"status": "verificar", "ref_ano": None, "fim_bloco": fim_bloco}
+        for m in bloco:
+            m.prescricao = info
 
 
 def inferir_mandatos(resultado_rastrear: dict, duracao: int = 4) -> dict:
@@ -72,6 +109,8 @@ def inferir_mandatos(resultado_rastrear: dict, duracao: int = 4) -> dict:
             sq_candidato=item.get("sq_candidato"),
             cd_municipio=item.get("cd_municipio"),
         ))
+
+    _calcular_prescricao(mandatos)
 
     # CPF a nível de pessoa: primeiro não nulo (2024 não tem CPF, herda de ano anterior).
     cpfs = [item.get("nr_cpf") for item in resultado_rastrear["anos"] if item.get("nr_cpf")]
