@@ -85,7 +85,17 @@ def _action_rastrear(params: dict) -> dict:
         "suplencias": inf["suplencias"],
         "sem_eleicao": inf["sem_eleicao"],
         "homonimos": resultado["homonimos"],
+        "cpf": inf["cpf"],
+        "cpfs_distintos": inf["cpfs_distintos"],
     }
+
+
+def _action_ficha(params: dict) -> dict:
+    from tse_core.tse_api import buscar_ficha
+    ano = params["ano"][0]
+    municipio = params["municipio"][0]
+    sq = params["sq"][0]
+    return buscar_ficha(ano, municipio, sq)
 
 
 def _action_excel(params: dict) -> bytes:
@@ -106,6 +116,7 @@ _ACTIONS = {
     "municipios": _action_municipios,
     "listar": _action_listar,
     "rastrear": _action_rastrear,
+    "ficha": _action_ficha,
 }
 
 

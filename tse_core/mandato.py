@@ -73,12 +73,19 @@ def inferir_mandatos(resultado_rastrear: dict, duracao: int = 4) -> dict:
             cd_municipio=item.get("cd_municipio"),
         ))
 
+    # CPF a nível de pessoa: primeiro não nulo (2024 não tem CPF, herda de ano anterior).
+    cpfs = [item.get("nr_cpf") for item in resultado_rastrear["anos"] if item.get("nr_cpf")]
+    cpf = cpfs[0] if cpfs else None
+    cpfs_distintos = len(set(cpfs))
+
     return {
         "municipio": resultado_rastrear["municipio"],
         "cargo": resultado_rastrear["cargo"],
         "mandatos": mandatos,
         "suplencias": suplencias,
         "sem_eleicao": sem_eleicao,
+        "cpf": cpf,
+        "cpfs_distintos": cpfs_distintos,
     }
 
 

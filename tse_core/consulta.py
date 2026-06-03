@@ -199,7 +199,7 @@ def rastrear(
 
     for ano in anos_busca:
         rows = conn.execute(
-            "SELECT nm_candidato, nm_urna, sg_partido, situacao_turno, sq_candidato, situacao_candidatura "
+            "SELECT nm_candidato, nm_urna, sg_partido, situacao_turno, sq_candidato, situacao_candidatura, nr_cpf "
             "FROM candidatura "
             "WHERE ano = ? AND uf = ? AND cd_municipio = ? AND cd_cargo = ?",
             (ano, uf.upper(), cd_municipio, cd_cargo),
@@ -220,6 +220,7 @@ def rastrear(
                               or _normalizar(row["situacao_turno"] or "").startswith("ELEITO"),
                     "sq_candidato": row["sq_candidato"],
                     "cd_municipio": cd_municipio,
+                    "nr_cpf": row["nr_cpf"],
                 })
 
     return {

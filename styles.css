@@ -487,6 +487,95 @@ details[open] summary::before { content: '▼ '; }
   box-shadow: 0 0 0 2px var(--muted);
 }
 
+/* ── CPF da pessoa ─────────────────────────────────────── */
+.tse-cpf {
+  font-size: .85rem;
+  color: var(--muted);
+  margin: .25rem 0 .5rem;
+  font-feature-settings: "tnum";
+}
+.tse-cpf strong { color: var(--ink); }
+
+/* ── Evolução patrimonial ─────────────────────────────── */
+.tse-patrimonio-wrap { margin-top: 1rem; }
+
+.tse-pat-title {
+  font-family: 'Fraunces', serif;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--primary);
+  margin: 1rem 0 .5rem;
+}
+
+.tse-pat {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.tse-pat-linha {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+}
+.tse-pat-linha:last-child { border-bottom: none; }
+
+.tse-pat-cab {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.tse-pat-ano {
+  font-family: 'Fraunces', serif;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--primary);
+  min-width: 3.2em;
+}
+
+.tse-pat-valor {
+  font-feature-settings: "tnum";
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.tse-delta {
+  font-size: .78rem;
+  font-weight: 600;
+  color: var(--muted);
+  font-feature-settings: "tnum";
+}
+
+.tse-delta-salto {
+  color: #8B4500;
+  background: #FEF3E6;
+  border: 1px solid #F5D59A;
+  border-radius: 3px;
+  padding: 1px 6px;
+}
+
+.tse-bens { margin-top: 6px; }
+.tse-bens summary {
+  font-size: .78rem;
+  color: var(--muted);
+  cursor: pointer;
+}
+.tse-bens ul {
+  margin: 6px 0 2px;
+  padding-left: 1.2rem;
+  font-size: .82rem;
+  color: var(--ink);
+}
+.tse-bens li { margin: 2px 0; }
+
+.tse-pat-fonte {
+  font-size: .72rem;
+  color: var(--muted);
+  margin-top: .5rem;
+}
+
 /* ── Responsive ───────────────────────────────────────── */
 @media (max-width: 560px) {
   .tse-metrics { flex-direction: column; }

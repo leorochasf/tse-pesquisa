@@ -265,6 +265,83 @@ function renderTimeline(data) {
   return `<div class="tse-timeline">${items}</div>`;
 }
 
+// ── Patrimônio / evolução patrimonial ──────────────────────────────────────────
+
+function formatCpf(cpf) {
+  const s = String(cpf).replace(/\D/g, '').padStart(11, '0');
+  return `${s.slice(0, 3)}.${s.slice(3, 6)}.${s.slice(6, 9)}-${s.slice(9)}`;
+}
+
+function formatBRL(v) {
+  if (v == null) return '—';
+  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(v);
+}
+
+function renderPatrimonio(fichas) {
+  const fs = [...fichas].sort((a, b) => a.ano - b.ano);
+  let prev = null;
+  const linhas = fs.map(f => {
+    let deltaHtml = '';
+    if (prev != null && prev > 0 && f.total_bens != null) {
+      const pct = Math.round((f.total_bens - prev) / prev * 100);
+      const salto = pct >= 100;
+      deltaHtml = `<span class="tse-delta${salto ? ' tse-delta-salto' : ''}">${pct >= 0 ? '+' : ''}${pct}%${salto ? ' ⚠' : ''}</span>`;
+    }
+    if (f.total_bens != null) prev = f.total_bens;
+
+    const valorTxt = f.total_bens != null
+      ? formatBRL(f.total_bens)
+      : (f.divulga_bens === false ? 'Não divulgado' : 'Não declarou bens');
+    const bensList = f.bens.length ? `
+      <details class="tse-bens">
+        <summary>${f.bens.length} bem(ns) declarado(s)</summary>
+        <ul>${f.bens.map(b => `<li>${b.descricao || b.tipo || '—'} &mdash; <strong>${formatBRL(b.valor)}</strong></li>`).join('')}</ul>
+      </details>` : '';
+
+    return `
+      <div class="tse-pat-linha">
+        <div class="tse-pat-cab">
+          <span class="tse-pat-ano">${f.ano}</span>
+          <span class="tse-pat-valor">${valorTxt}</span>
+          ${deltaHtml}
+        </div>
+        ${bensList}
+      </div>`;
+  }).join('');
+
+  return `
+    <h4 class="tse-pat-title">Evolução patrimonial (bens declarados)</h4>
+    <div class="tse-pat">${linhas}</div>
+    <p class="tse-pat-fonte">Fonte: ficha do candidato no DivulgaCandContas (TSE). Valores conforme declaração de cada eleição.</p>`;
+}
+
+async function carregarPatrimonio(data, btn) {
+  const panel = document.getElementById('patrimonio-out');
+  btn.disabled = true;
+  panel.innerHTML = '';
+  panel.appendChild(spinner());
+  panel.appendChild(document.createTextNode(' Consultando bens declarados no TSE…'));
+
+  // Candidaturas da pessoa (ano + município + sq), sem duplicatas e com sq válido
+  const cands = [];
+  data.mandatos.forEach(m => cands.push({ ano: m.ano_eleicao, mun: m.cd_municipio, sq: m.sq_candidato }));
+  data.suplencias.forEach(s => cands.push({ ano: s.ano, mun: s.cd_municipio, sq: s.sq_candidato }));
+  data.sem_eleicao.forEach(s => cands.push({ ano: s.ano, mun: s.cd_municipio, sq: s.sq_candidato }));
+  const seen = new Set();
+  const unicos = cands.filter(c => c.sq && c.mun && !seen.has(`${c.ano}-${c.sq}`) && seen.add(`${c.ano}-${c.sq}`));
+
+  try {
+    const fichas = await Promise.all(
+      unicos.map(c => apiFetch({ action: 'ficha', ano: c.ano, municipio: c.mun, sq: c.sq }))
+    );
+    panel.innerHTML = renderPatrimonio(fichas);
+  } catch (err) {
+    panel.innerHTML = '';
+    panel.appendChild(callout('Não foi possível consultar os bens no TSE agora. Tente novamente em instantes.', 'erro'));
+    btn.disabled = false;
+  }
+}
+
 document.getElementById('form-rastrear').addEventListener('submit', async e => {
   e.preventDefault();
   const municipio = document.getElementById('municipio-rastrear').value;
@@ -287,13 +364,13 @@ document.getElementById('form-rastrear').addEventListener('submit', async e => {
     const data = await apiFetch({ action: 'rastrear', nome, municipio, cargo });
     out.innerHTML = '';
 
-    // Homônimos
-    if (data.homonimos && data.homonimos.length > 1) {
-      const nomes = data.homonimos.map(n => `&bull; ${n}`).join('<br>');
-      out.appendChild(callout(
-        `<strong>Múltiplos candidatos encontrados</strong> — use o nome completo para refinar:<br><br>${nomes}`,
-        'warn'
-      ));
+    // Homônimos — reforçado por CPFs distintos
+    const multiNomes = data.homonimos && data.homonimos.length > 1;
+    if (multiNomes || data.cpfs_distintos > 1) {
+      let msg = `<strong>Múltiplos candidatos encontrados</strong> — use o nome completo para refinar.`;
+      if (data.cpfs_distintos > 1) msg += `<br><small>Detectados ${data.cpfs_distintos} CPFs distintos nos resultados.</small>`;
+      if (multiNomes) msg += `<br><br>${data.homonimos.map(n => `&bull; ${n}`).join('<br>')}`;
+      out.appendChild(callout(msg, 'warn'));
     }
 
     if (!data.mandatos.length && !data.suplencias.length && !data.sem_eleicao.length) {
@@ -301,9 +378,23 @@ document.getElementById('form-rastrear').addEventListener('submit', async e => {
       return;
     }
 
+    // CPF da pessoa
+    if (data.cpf) {
+      out.innerHTML += `<p class="tse-cpf">CPF: <strong>${formatCpf(data.cpf)}</strong></p>`;
+    }
+
     // Timeline unificada (eleito / suplente / não eleito)
     out.innerHTML += `<h3 class="tse-subhead">Linha do tempo de candidaturas</h3>`;
     out.innerHTML += renderTimeline(data);
+
+    // Patrimônio (sob demanda)
+    out.innerHTML += `
+      <div class="tse-patrimonio-wrap">
+        <button type="button" class="btn-outline" id="btn-patrimonio">📊 Ver evolução patrimonial</button>
+        <div id="patrimonio-out"></div>
+      </div>`;
+    const btnPat = document.getElementById('btn-patrimonio');
+    if (btnPat) btnPat.addEventListener('click', () => carregarPatrimonio(data, btnPat));
   } catch (err) {
     out.innerHTML = '';
     out.appendChild(callout(err.message, 'erro'));
