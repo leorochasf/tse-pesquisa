@@ -112,17 +112,6 @@ def _action_parecer(params: dict) -> dict:
     return {"parecer": texto}
 
 
-def _action_chat(params: dict) -> dict:
-    from tse_core.ia import montar_contexto_pessoa, chamar_openrouter, _SISTEMA
-    pergunta = params["pergunta"][0]
-    ctx = montar_contexto_pessoa(params["nome"][0], params["municipio"][0], params["cargo"][0])
-    texto = chamar_openrouter([
-        {"role": "system", "content": _SISTEMA},
-        {"role": "user", "content": f"{ctx['contexto']}\n\n---\nPergunta: {pergunta}"},
-    ])
-    return {"resposta": texto}
-
-
 def _action_excel(params: dict) -> bytes:
     from tse_core.consulta import listar
     from tse_core.export import gerar_excel
@@ -143,7 +132,6 @@ _ACTIONS = {
     "rastrear": _action_rastrear,
     "ficha": _action_ficha,
     "parecer": _action_parecer,
-    "chat": _action_chat,
 }
 
 

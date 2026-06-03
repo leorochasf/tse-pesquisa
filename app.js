@@ -304,8 +304,25 @@ async function carregarMotivos() {
 // ── IA: parecer e chat ─────────────────────────────────────────────────────────
 
 function formatTextoIA(t) {
-  const esc = String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  return `<div class="tse-ia-texto">${esc.replace(/\n/g, '<br>')}</div>`;
+  const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const inline = s => esc(s).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  const linhas = String(t).split('\n');
+  let html = '', emLista = false;
+  const fechaLista = () => { if (emLista) { html += '</ul>'; emLista = false; } };
+  for (const raw of linhas) {
+    const linha = raw.trim();
+    if (!linha) { fechaLista(); continue; }
+    const bullet = linha.match(/^[*\-]\s+(.*)/);
+    if (bullet) {
+      if (!emLista) { html += '<ul>'; emLista = true; }
+      html += `<li>${inline(bullet[1])}</li>`;
+    } else {
+      fechaLista();
+      html += `<p>${inline(linha)}</p>`;
+    }
+  }
+  fechaLista();
+  return `<div class="tse-ia-texto">${html}</div>`;
 }
 
 async function gerarParecer(q, btn) {
@@ -327,27 +344,6 @@ async function gerarParecer(q, btn) {
     panel.appendChild(callout(err.message, 'erro'));
   } finally {
     btn.disabled = false;
-  }
-}
-
-async function perguntarChat(q) {
-  const inp = document.getElementById('chat-pergunta');
-  const pergunta = inp.value.trim();
-  if (!pergunta) return;
-  const panel = document.getElementById('chat-out');
-  panel.innerHTML = '';
-  panel.appendChild(spinner());
-  panel.appendChild(document.createTextNode(' Consultando IA…'));
-  try {
-    const { resposta } = await apiFetch({ action: 'chat', nome: q.nome, municipio: q.municipio, cargo: q.cargo, pergunta });
-    panel.innerHTML = `
-      <div class="tse-ia-out">
-        <div class="tse-ia-pergunta">${pergunta.replace(/</g, '&lt;')}</div>
-        ${formatTextoIA(resposta)}
-      </div>`;
-  } catch (err) {
-    panel.innerHTML = '';
-    panel.appendChild(callout(err.message, 'erro'));
   }
 }
 
@@ -524,24 +520,14 @@ document.getElementById('form-rastrear').addEventListener('submit', async e => {
     const btnPat = document.getElementById('btn-patrimonio');
     if (btnPat) btnPat.addEventListener('click', () => carregarPatrimonio(data, btnPat));
 
-    // IA (parecer + chat) — sob demanda
+    // Parecer de triagem (IA) — sob demanda
     out.innerHTML += `
       <div class="tse-ia-wrap">
         <button type="button" class="btn-outline" id="btn-parecer">🤖 Gerar parecer (IA)</button>
         <div id="parecer-out"></div>
-        <div class="tse-chat">
-          <input type="text" id="chat-pergunta" placeholder="Pergunte sobre esta pessoa…">
-          <button type="button" class="btn-outline" id="btn-chat">Perguntar</button>
-        </div>
-        <div id="chat-out"></div>
       </div>`;
-    const ctxIA = { nome, municipio, cargo };
     const btnParecer = document.getElementById('btn-parecer');
-    if (btnParecer) btnParecer.addEventListener('click', () => gerarParecer(ctxIA, btnParecer));
-    const btnChat = document.getElementById('btn-chat');
-    if (btnChat) btnChat.addEventListener('click', () => perguntarChat(ctxIA));
-    const inpChat = document.getElementById('chat-pergunta');
-    if (inpChat) inpChat.addEventListener('keydown', e => { if (e.key === 'Enter') perguntarChat(ctxIA); });
+    if (btnParecer) btnParecer.addEventListener('click', () => gerarParecer({ nome, municipio, cargo }, btnParecer));
 
     // Motivos das candidaturas com restrição, direto nos cards da timeline
     carregarMotivos();
