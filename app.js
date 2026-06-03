@@ -253,16 +253,35 @@ function renderTimeline(data) {
     }
 
     // Suplente ou não eleito — card secundário, sem período de mandato
+    // Para candidaturas com restrição (indeferido/cassado/etc.), placeholder
+    // para os motivos, carregados depois via API (ver carregarMotivos).
+    const ehRestricao = ev.tipo === 'naoel' && !/^(n[ãa]o eleito|sem )/i.test(ev.situacao || '');
+    const motivosPh = (ehRestricao && ev.sq && ev.cdMun)
+      ? `<div class="tse-tl-motivos" data-ano="${ev.ano}" data-mun="${ev.cdMun}" data-sq="${ev.sq}"></div>` : '';
     return `
       <div class="tse-tl-item tse-tl-item-${ev.tipo}">
         <div class="tse-tl-card tse-tl-card-sec">
           <div class="tse-tl-ano tse-tl-ano-sec">Eleição ${ev.ano}&nbsp;${badge(ev.situacao, ev.tipo)}</div>
           ${partidoHtml ? `<div class="tse-tl-row">${partidoHtml}</div>` : ''}
+          ${motivosPh}
           ${tseLink}
         </div>
       </div>`;
   }).join('');
   return `<div class="tse-timeline">${items}</div>`;
+}
+
+// Busca os motivos das candidaturas com restrição e injeta nos cards.
+async function carregarMotivos() {
+  const els = [...document.querySelectorAll('.tse-tl-motivos[data-sq]')];
+  await Promise.all(els.map(async el => {
+    try {
+      const f = await apiFetch({ action: 'ficha', ano: el.dataset.ano, municipio: el.dataset.mun, sq: el.dataset.sq });
+      if (f.motivos && f.motivos.length) {
+        el.innerHTML = `<div class="tse-motivos">${f.motivos.map(m => `<span class="tse-motivo">${m}</span>`).join('')}</div>`;
+      }
+    } catch { /* silencioso — o badge da situação já está no card */ }
+  }));
 }
 
 // ── Patrimônio / evolução patrimonial ──────────────────────────────────────────
@@ -437,6 +456,9 @@ document.getElementById('form-rastrear').addEventListener('submit', async e => {
       </div>`;
     const btnPat = document.getElementById('btn-patrimonio');
     if (btnPat) btnPat.addEventListener('click', () => carregarPatrimonio(data, btnPat));
+
+    // Motivos das candidaturas com restrição, direto nos cards da timeline
+    carregarMotivos();
   } catch (err) {
     out.innerHTML = '';
     out.appendChild(callout(err.message, 'erro'));
