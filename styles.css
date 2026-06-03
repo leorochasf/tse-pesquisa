@@ -639,6 +639,63 @@ details[open] summary::before { content: '▼ '; }
   margin-top: .5rem;
 }
 
+/* ── IA: parecer e chat ────────────────────────────────── */
+.tse-ia-wrap { margin-top: 1rem; }
+
+.tse-chat {
+  display: flex;
+  gap: 8px;
+  margin-top: .75rem;
+}
+.tse-chat input {
+  flex: 1;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-family: 'Public Sans', sans-serif;
+  font-size: .875rem;
+  color: var(--ink);
+  background: var(--surface);
+  outline: none;
+}
+.tse-chat input:focus { border-color: var(--primary); }
+
+.tse-ia-out {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--primary);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  margin-top: .6rem;
+  box-shadow: var(--shadow);
+}
+
+.tse-ia-titulo {
+  font-family: 'Fraunces', serif;
+  font-weight: 600;
+  color: var(--primary);
+  margin-bottom: 6px;
+}
+
+.tse-ia-pergunta {
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 6px;
+}
+
+.tse-ia-texto {
+  font-size: .88rem;
+  line-height: 1.55;
+  color: var(--ink);
+}
+
+.tse-ia-aviso {
+  font-size: .72rem;
+  color: var(--muted);
+  font-style: italic;
+  margin-top: .6rem;
+}
+
 /* ── Responsive ───────────────────────────────────────── */
 @media (max-width: 560px) {
   .tse-metrics { flex-direction: column; }

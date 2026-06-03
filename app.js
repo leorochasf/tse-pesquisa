@@ -301,6 +301,56 @@ async function carregarMotivos() {
   }));
 }
 
+// ── IA: parecer e chat ─────────────────────────────────────────────────────────
+
+function formatTextoIA(t) {
+  const esc = String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return `<div class="tse-ia-texto">${esc.replace(/\n/g, '<br>')}</div>`;
+}
+
+async function gerarParecer(q, btn) {
+  const panel = document.getElementById('parecer-out');
+  btn.disabled = true;
+  panel.innerHTML = '';
+  panel.appendChild(spinner());
+  panel.appendChild(document.createTextNode(' Gerando parecer com IA…'));
+  try {
+    const { parecer } = await apiFetch({ action: 'parecer', nome: q.nome, municipio: q.municipio, cargo: q.cargo });
+    panel.innerHTML = `
+      <div class="tse-ia-out">
+        <div class="tse-ia-titulo">Parecer de triagem (IA)</div>
+        ${formatTextoIA(parecer)}
+        <p class="tse-ia-aviso">Apoio à triagem gerado por IA com base apenas nos dados coletados — não substitui análise jurídica. Confira antes de usar.</p>
+      </div>`;
+  } catch (err) {
+    panel.innerHTML = '';
+    panel.appendChild(callout(err.message, 'erro'));
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function perguntarChat(q) {
+  const inp = document.getElementById('chat-pergunta');
+  const pergunta = inp.value.trim();
+  if (!pergunta) return;
+  const panel = document.getElementById('chat-out');
+  panel.innerHTML = '';
+  panel.appendChild(spinner());
+  panel.appendChild(document.createTextNode(' Consultando IA…'));
+  try {
+    const { resposta } = await apiFetch({ action: 'chat', nome: q.nome, municipio: q.municipio, cargo: q.cargo, pergunta });
+    panel.innerHTML = `
+      <div class="tse-ia-out">
+        <div class="tse-ia-pergunta">${pergunta.replace(/</g, '&lt;')}</div>
+        ${formatTextoIA(resposta)}
+      </div>`;
+  } catch (err) {
+    panel.innerHTML = '';
+    panel.appendChild(callout(err.message, 'erro'));
+  }
+}
+
 // ── Patrimônio / evolução patrimonial ──────────────────────────────────────────
 
 function formatCpf(cpf) {
@@ -473,6 +523,25 @@ document.getElementById('form-rastrear').addEventListener('submit', async e => {
       </div>`;
     const btnPat = document.getElementById('btn-patrimonio');
     if (btnPat) btnPat.addEventListener('click', () => carregarPatrimonio(data, btnPat));
+
+    // IA (parecer + chat) — sob demanda
+    out.innerHTML += `
+      <div class="tse-ia-wrap">
+        <button type="button" class="btn-outline" id="btn-parecer">🤖 Gerar parecer (IA)</button>
+        <div id="parecer-out"></div>
+        <div class="tse-chat">
+          <input type="text" id="chat-pergunta" placeholder="Pergunte sobre esta pessoa…">
+          <button type="button" class="btn-outline" id="btn-chat">Perguntar</button>
+        </div>
+        <div id="chat-out"></div>
+      </div>`;
+    const ctxIA = { nome, municipio, cargo };
+    const btnParecer = document.getElementById('btn-parecer');
+    if (btnParecer) btnParecer.addEventListener('click', () => gerarParecer(ctxIA, btnParecer));
+    const btnChat = document.getElementById('btn-chat');
+    if (btnChat) btnChat.addEventListener('click', () => perguntarChat(ctxIA));
+    const inpChat = document.getElementById('chat-pergunta');
+    if (inpChat) inpChat.addEventListener('keydown', e => { if (e.key === 'Enter') perguntarChat(ctxIA); });
 
     // Motivos das candidaturas com restrição, direto nos cards da timeline
     carregarMotivos();
