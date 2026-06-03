@@ -17,6 +17,19 @@ def _normalizar(texto: str) -> str:
     return "".join(c for c in nfkd if not unicodedata.combining(c))
 
 
+def _casa_nome(alvo: str, nm: str, nu: str) -> bool:
+    """
+    Casa o termo buscado por prefixo de palavra (não substring), evitando
+    falsos positivos como 'ELDES' casar com 'UELDES'. Cada palavra do termo
+    deve ser prefixo de alguma palavra do nome ou nome de urna.
+    """
+    termos = alvo.split()
+    if not termos:
+        return False
+    palavras = set(nm.split()) | set(nu.split())
+    return all(any(p.startswith(t) for p in palavras) for t in termos)
+
+
 def _resolver_municipio(conn, municipio: str, ano: int, uf: str) -> list[dict]:
     """Busca municípios que correspondam ao texto, sem acento e case-insensitive."""
     rows = conn.execute(
@@ -182,7 +195,7 @@ def rastrear(
         for row in rows:
             nm = _normalizar(row["nm_candidato"] or "")
             nu = _normalizar(row["nm_urna"] or "")
-            if alvo_nome in nm or alvo_nome in nu or nm in alvo_nome:
+            if _casa_nome(alvo_nome, nm, nu):
                 nomes_encontrados.add(row["nm_candidato"])
                 resultados.append({
                     "ano": ano,
