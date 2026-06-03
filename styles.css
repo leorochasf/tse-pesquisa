@@ -468,6 +468,25 @@ details[open] summary::before { content: '▼ '; }
   box-shadow: 0 0 0 2px rgba(27,122,75,.15);
 }
 
+/* Cards secundários: candidaturas sem mandato (suplente / não eleito) */
+.tse-tl-card-sec {
+  background: transparent;
+  border-style: dashed;
+  box-shadow: none;
+}
+
+.tse-tl-ano-sec {
+  font-size: .95rem;
+  color: var(--muted);
+}
+
+/* Marcadores cinza na linha do tempo para itens secundários */
+.tse-tl-item-suplente::before,
+.tse-tl-item-naoel::before {
+  background: var(--muted);
+  box-shadow: 0 0 0 2px var(--muted);
+}
+
 /* ── Responsive ───────────────────────────────────────── */
 @media (max-width: 560px) {
   .tse-metrics { flex-direction: column; }

@@ -17,6 +17,13 @@ def _normalizar(texto: str) -> str:
     return "".join(c for c in nfkd if not unicodedata.combining(c))
 
 
+def _situacao_label(valor: str | None) -> str:
+    """Normaliza marcadores nulos ilegíveis do TSE (ex.: '#NULO#') para exibição."""
+    if not valor or valor.strip("#").upper() in ("NULO", "NE"):
+        return "SEM INFO"
+    return valor
+
+
 def _casa_nome(alvo: str, nm: str, nu: str) -> bool:
     """
     Casa o termo buscado por prefixo de palavra (não substring), evitando
@@ -124,7 +131,7 @@ def listar(
             "nome": row["nm_candidato"],
             "urna": row["nm_urna"],
             "partido": row["sg_partido"],
-            "situacao": row["situacao_turno"] or "SEM INFO",
+            "situacao": _situacao_label(row["situacao_turno"]),
             "eleito": (row["situacao_turno"] or "") in _SITUACOES_ELEITO
                       or _normalizar(row["situacao_turno"] or "").startswith("ELEITO"),
             "sq_candidato": row["sq_candidato"],
@@ -202,7 +209,7 @@ def rastrear(
                     "nome": row["nm_candidato"],
                     "urna": row["nm_urna"],
                     "partido": row["sg_partido"],
-                    "situacao": row["situacao_turno"] or "SEM INFO",
+                    "situacao": _situacao_label(row["situacao_turno"]),
                     "eleito": (row["situacao_turno"] or "") in _SITUACOES_ELEITO
                               or _normalizar(row["situacao_turno"] or "").startswith("ELEITO"),
                     "sq_candidato": row["sq_candidato"],

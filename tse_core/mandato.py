@@ -41,12 +41,19 @@ def inferir_mandatos(resultado_rastrear: dict, duracao: int = 4) -> dict:
         if item["eleito"]:
             anos_eleitos.append(item)
         elif item["situacao"] == "SUPLENTE":
-            suplencias.append({"ano": item["ano"], "partido": item["partido"]})
+            suplencias.append({
+                "ano": item["ano"],
+                "partido": item["partido"],
+                "sq_candidato": item.get("sq_candidato"),
+                "cd_municipio": item.get("cd_municipio"),
+            })
         else:
             sem_eleicao.append({
                 "ano": item["ano"],
                 "situacao": item["situacao"],
                 "partido": item["partido"],
+                "sq_candidato": item.get("sq_candidato"),
+                "cd_municipio": item.get("cd_municipio"),
             })
 
     anos_eleitos.sort(key=lambda x: x["ano"])

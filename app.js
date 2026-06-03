@@ -208,24 +208,56 @@ document.getElementById('form-listar').addEventListener('submit', async e => {
 
 // ── Aba: Rastrear ─────────────────────────────────────────────────────────────
 
-function renderTimeline(mandatos, municipio, cargo) {
-  if (!mandatos.length) return '<div class="tse-callout tse-callout-info">Nenhum mandato registrado.</div>';
+function renderTimeline(data) {
   const anoAtual = new Date().getFullYear();
-  const items = [...mandatos].reverse().map(m => {
-    const ehAtual = anoAtual >= m.inicio && anoAtual <= m.fim;
-    const reeleicaoHtml = m.reeleicao ? `&nbsp;${badge('Reeleição', 'reeleicao')}` : '';
-    const atualHtml = ehAtual ? `&nbsp;${badge('Mandato atual', 'atual')}` : '';
-    const partidoHtml = m.partido ? `<span class="tse-tl-partido">${m.partido}</span>` : '';
-    const tseHref = tseCandidatoUrl(m.ano_eleicao, m.sq_candidato, m.cd_municipio);
+
+  // Unifica eleitos, suplentes e não eleitos numa só linha do tempo (decrescente).
+  const eventos = [];
+  data.mandatos.forEach(m => eventos.push({
+    tipo: 'eleito', ano: m.ano_eleicao, partido: m.partido,
+    sq: m.sq_candidato, cdMun: m.cd_municipio,
+    inicio: m.inicio, fim: m.fim, reeleicao: m.reeleicao,
+    atual: anoAtual >= m.inicio && anoAtual <= m.fim,
+  }));
+  data.suplencias.forEach(s => eventos.push({
+    tipo: 'suplente', ano: s.ano, partido: s.partido,
+    sq: s.sq_candidato, cdMun: s.cd_municipio, situacao: 'Suplente',
+  }));
+  data.sem_eleicao.forEach(s => eventos.push({
+    tipo: 'naoel', ano: s.ano, partido: s.partido,
+    sq: s.sq_candidato, cdMun: s.cd_municipio, situacao: s.situacao || 'Não eleito',
+  }));
+
+  if (!eventos.length) return '<div class="tse-callout tse-callout-info">Nenhum registro encontrado.</div>';
+  eventos.sort((a, b) => b.ano - a.ano);
+
+  const items = eventos.map(ev => {
+    const partidoHtml = ev.partido ? `<span class="tse-tl-partido">${ev.partido}</span>` : '';
+    const tseHref = tseCandidatoUrl(ev.ano, ev.sq, ev.cdMun);
     const tseLink = tseHref ? `
       <div class="tse-tl-confirm">
         <a href="${tseHref}" target="_blank" rel="noopener">🔗 Ver ficha no TSE</a>
       </div>` : '';
+
+    if (ev.tipo === 'eleito') {
+      const reeleicaoHtml = ev.reeleicao ? `&nbsp;${badge('Reeleição', 'reeleicao')}` : '';
+      const atualHtml = ev.atual ? `&nbsp;${badge('Mandato atual', 'atual')}` : '';
+      return `
+        <div class="tse-tl-item">
+          <div class="tse-tl-card${ev.atual ? ' tse-tl-card-atual' : ''}">
+            <div class="tse-tl-ano">Eleição ${ev.ano}${reeleicaoHtml}${atualHtml}</div>
+            <div class="tse-tl-row">${partidoHtml}<span class="tse-tl-periodo">${ev.inicio}&ndash;${ev.fim}</span></div>
+            ${tseLink}
+          </div>
+        </div>`;
+    }
+
+    // Suplente ou não eleito — card secundário, sem período de mandato
     return `
-      <div class="tse-tl-item">
-        <div class="tse-tl-card${ehAtual ? ' tse-tl-card-atual' : ''}">
-          <div class="tse-tl-ano">Eleição ${m.ano_eleicao}${reeleicaoHtml}${atualHtml}</div>
-          <div class="tse-tl-row">${partidoHtml}<span class="tse-tl-periodo">${m.inicio}&ndash;${m.fim}</span></div>
+      <div class="tse-tl-item tse-tl-item-${ev.tipo}">
+        <div class="tse-tl-card tse-tl-card-sec">
+          <div class="tse-tl-ano tse-tl-ano-sec">Eleição ${ev.ano}&nbsp;${badge(ev.situacao, ev.tipo)}</div>
+          ${partidoHtml ? `<div class="tse-tl-row">${partidoHtml}</div>` : ''}
           ${tseLink}
         </div>
       </div>`;
@@ -269,39 +301,9 @@ document.getElementById('form-rastrear').addEventListener('submit', async e => {
       return;
     }
 
-    // Timeline
-    out.innerHTML += `<h3 class="tse-subhead">Linha do tempo de mandatos</h3>`;
-    out.innerHTML += renderTimeline(data.mandatos, data.municipio, data.cargo);
-
-    // Suplências
-    if (data.suplencias.length) {
-      const rows = data.suplencias.map(s => `<tr><td>${s.ano}</td><td>${s.partido || ''}</td></tr>`).join('');
-      out.innerHTML += `
-        <details>
-          <summary>Suplências (${data.suplencias.length})</summary>
-          <div class="tse-table-wrap">
-            <table>
-              <thead><tr><th>Ano</th><th>Partido</th></tr></thead>
-              <tbody>${rows}</tbody>
-            </table>
-          </div>
-        </details>`;
-    }
-
-    // Não eleito
-    if (data.sem_eleicao.length) {
-      const rows = data.sem_eleicao.map(s => `<tr><td>${s.ano}</td><td>${s.situacao}</td><td>${s.partido || ''}</td></tr>`).join('');
-      out.innerHTML += `
-        <details>
-          <summary>Não eleito (${data.sem_eleicao.length})</summary>
-          <div class="tse-table-wrap">
-            <table>
-              <thead><tr><th>Ano</th><th>Situação</th><th>Partido</th></tr></thead>
-              <tbody>${rows}</tbody>
-            </table>
-          </div>
-        </details>`;
-    }
+    // Timeline unificada (eleito / suplente / não eleito)
+    out.innerHTML += `<h3 class="tse-subhead">Linha do tempo de candidaturas</h3>`;
+    out.innerHTML += renderTimeline(data);
   } catch (err) {
     out.innerHTML = '';
     out.appendChild(callout(err.message, 'erro'));
