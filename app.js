@@ -5,6 +5,14 @@
 
 const API = '/api/index';
 
+const _TSE_BASE = 'https://divulgacandcontas.tse.jus.br/divulga/';
+const _TSE_CD = { 2024: '2045202024', 2020: '2030402020', 2016: '2', 2012: '1699' };
+
+function tseUrl(ano) {
+  const cd = _TSE_CD[ano];
+  return cd ? `${_TSE_BASE}#/candidato/CENTRO-OESTE/GO/${cd}` : '';
+}
+
 // ── Utilitários ───────────────────────────────────────────────────────────────
 
 async function apiFetch(params) {
@@ -166,12 +174,15 @@ document.getElementById('form-listar').addEventListener('submit', async e => {
         </div>
       </div>`;
 
-    // Botão Excel
+    // Botão Excel + link TSE
     const excelUrl = `${API}?action=excel&ano=${encodeURIComponent(ano)}&municipio=${encodeURIComponent(municipio)}&cargo=${encodeURIComponent(cargo)}`;
+    const tseHref = tseUrl(Number(ano));
     out.innerHTML += `
       <div class="tse-toolbar">
         <a class="btn-outline" href="${excelUrl}" download>⬇ Baixar Excel</a>
-      </div>`;
+        ${tseHref ? `<a class="btn-outline" href="${tseHref}" target="_blank" rel="noopener">🔗 Confirmar no TSE</a>` : ''}
+      </div>
+      ${tseHref ? `<p class="tse-confirm-hint">No site do TSE, selecione <strong>${municipio}</strong> e <strong>${cargo}</strong>.</p>` : ''}`;
 
     // Eleitos
     if (eleitos.length) out.innerHTML += renderTabela(eleitos, 'Eleitos');
@@ -192,16 +203,23 @@ document.getElementById('form-listar').addEventListener('submit', async e => {
 
 // ── Aba: Rastrear ─────────────────────────────────────────────────────────────
 
-function renderTimeline(mandatos) {
+function renderTimeline(mandatos, municipio, cargo) {
   if (!mandatos.length) return '<div class="tse-callout tse-callout-info">Nenhum mandato registrado.</div>';
   const items = mandatos.map(m => {
     const reeleicaoHtml = m.reeleicao ? `&nbsp;${badge('Reeleição', 'reeleicao')}` : '';
     const partidoHtml = m.partido ? `<span class="tse-tl-partido">${m.partido}</span>` : '';
+    const tseHref = tseUrl(m.ano_eleicao);
+    const tseConfirm = tseHref ? `
+      <div class="tse-tl-confirm">
+        <a href="${tseHref}" target="_blank" rel="noopener">🔗 Eleição ${m.ano_eleicao} no TSE</a>
+        <span class="tse-tl-confirm-hint">Selecione ${municipio} / ${cargo}</span>
+      </div>` : '';
     return `
       <div class="tse-tl-item">
         <div class="tse-tl-card">
           <div class="tse-tl-ano">Eleição ${m.ano_eleicao}${reeleicaoHtml}</div>
           <div class="tse-tl-row">${partidoHtml}<span class="tse-tl-periodo">${m.inicio}&ndash;${m.fim}</span></div>
+          ${tseConfirm}
         </div>
       </div>`;
   }).join('');
@@ -246,7 +264,7 @@ document.getElementById('form-rastrear').addEventListener('submit', async e => {
 
     // Timeline
     out.innerHTML += `<h3 class="tse-subhead">Linha do tempo de mandatos</h3>`;
-    out.innerHTML += renderTimeline(data.mandatos);
+    out.innerHTML += renderTimeline(data.mandatos, data.municipio, data.cargo);
 
     // Suplências
     if (data.suplencias.length) {
