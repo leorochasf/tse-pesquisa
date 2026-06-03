@@ -8,6 +8,7 @@ Centraliza o mapa de cdEleicao, a lista de candidatos por município/cargo
 
 import json
 import os
+import tempfile
 import time
 import urllib.request
 
@@ -21,7 +22,8 @@ _FICHA_URL = _BASE + "/buscar/{ano}/{municipio}/{cd_eleicao}/candidato/{sq}"
 
 _CACHE_DIR = os.path.join(os.path.dirname(__file__), "..", "cache")
 _CACHE_LISTA = os.path.join(_CACHE_DIR, "divulga")
-_CACHE_FICHA = os.path.join(_CACHE_DIR, "ficha")
+# Ficha é consultada em runtime (inclusive na Vercel, onde só /tmp é gravável).
+_CACHE_FICHA = os.path.join(tempfile.gettempdir(), "tse_ficha")
 
 
 def _get_json(url: str) -> dict:
@@ -54,16 +56,22 @@ def buscar_ficha(ano: int, municipio: str, sq: str) -> dict:
     if not cd_eleicao:
         return {"ano": ano, "total_bens": None, "bens": [], "divulga_bens": False}
 
-    os.makedirs(_CACHE_FICHA, exist_ok=True)
     cache_path = os.path.join(_CACHE_FICHA, f"{ano}_{municipio}_{sq}.json")
+    d = None
     if os.path.exists(cache_path):
-        with open(cache_path, encoding="utf-8") as f:
-            d = json.load(f)
-    else:
+        try:
+            with open(cache_path, encoding="utf-8") as f:
+                d = json.load(f)
+        except Exception:
+            d = None
+    if d is None:
         d = _get_json(_FICHA_URL.format(ano=ano, municipio=municipio, cd_eleicao=cd_eleicao, sq=sq))
-        with open(cache_path, "w", encoding="utf-8") as f:
-            json.dump(d, f)
-        time.sleep(0.2)
+        try:  # cache best-effort — disco pode ser só-leitura (serverless)
+            os.makedirs(_CACHE_FICHA, exist_ok=True)
+            with open(cache_path, "w", encoding="utf-8") as f:
+                json.dump(d, f)
+        except OSError:
+            pass
 
     bens = [
         {
