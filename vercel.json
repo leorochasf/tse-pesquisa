@@ -1,7 +1,11 @@
 {
-  "functions": {
-    "api/**": {
-      "includeFiles": "tse_core/**"
+  "builds": [
+    {
+      "src": "api/index.py",
+      "use": "@vercel/python",
+      "config": {
+        "includeFiles": "tse_core/**"
+      }
     }
-  }
+  ]
 }
