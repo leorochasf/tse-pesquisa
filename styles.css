@@ -1,0 +1,446 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400&family=Public+Sans:wght@400;500;600&display=swap');
+
+/* ── Tokens ───────────────────────────────────────────── */
+:root {
+  --ink:       #18222E;
+  --muted:     #5C6672;
+  --paper:     #F6F4EE;
+  --surface:   #FFFFFF;
+  --primary:   #0F3B4C;
+  --primary-h: #0B2C39;
+  --accent:    #B8741A;
+  --eleito:    #1B7A4B;
+  --border:    #E3DFD4;
+  --radius:    6px;
+  --shadow:    0 1px 4px rgba(15,59,76,.10);
+}
+
+/* ── Base ─────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  font-family: 'Public Sans', sans-serif;
+  color: var(--ink);
+  background: var(--paper);
+  min-height: 100vh;
+}
+
+body {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 3rem;
+}
+
+/* ── Header institucional ─────────────────────────────── */
+.tse-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 0 0 1.25rem;
+  border-bottom: 2px solid var(--primary);
+  margin-bottom: 1.5rem;
+}
+
+.tse-header-icon {
+  flex-shrink: 0;
+  width: 42px;
+  height: 42px;
+  background: var(--primary);
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tse-header-text h1 {
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: 1.55rem;
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--primary);
+  letter-spacing: -.01em;
+}
+
+.tse-header-text p {
+  font-size: .78rem;
+  color: var(--muted);
+  margin-top: 2px;
+  font-weight: 500;
+  letter-spacing: .02em;
+  text-transform: uppercase;
+}
+
+/* ── Abas (segmented control) ─────────────────────────── */
+.tse-tabs {
+  display: flex;
+  gap: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 3px;
+  width: fit-content;
+  box-shadow: var(--shadow);
+  margin-bottom: 1.5rem;
+}
+
+.tse-tab {
+  border-radius: 4px;
+  padding: 7px 20px;
+  font-size: .82rem;
+  font-weight: 600;
+  letter-spacing: .03em;
+  color: var(--muted);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-family: 'Public Sans', sans-serif;
+  transition: background .15s, color .15s;
+}
+
+.tse-tab[aria-selected="true"] {
+  background: var(--primary);
+  color: #fff;
+}
+
+/* ── Seções ───────────────────────────────────────────── */
+.tse-section { display: none; }
+.tse-section.active { display: block; }
+
+/* ── Formulários ──────────────────────────────────────── */
+.tse-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+  margin-bottom: 1.25rem;
+}
+
+.tse-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-width: 140px;
+}
+
+.tse-field label {
+  font-size: .75rem;
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.tse-field select,
+.tse-field input[type="text"] {
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-family: 'Public Sans', sans-serif;
+  font-size: .875rem;
+  color: var(--ink);
+  background: var(--surface);
+  outline: none;
+  transition: border-color .15s;
+}
+
+.tse-field select:focus,
+.tse-field input[type="text"]:focus {
+  border-color: var(--primary);
+}
+
+/* ── Botões ───────────────────────────────────────────── */
+.btn-primary {
+  padding: 8px 18px;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius);
+  font-family: 'Public Sans', sans-serif;
+  font-size: .875rem;
+  font-weight: 600;
+  letter-spacing: .02em;
+  cursor: pointer;
+  transition: background .15s;
+  white-space: nowrap;
+}
+
+.btn-primary:hover { background: var(--primary-h); }
+.btn-primary:disabled { opacity: .5; cursor: default; }
+
+.btn-outline {
+  padding: 7px 16px;
+  background: transparent;
+  color: var(--primary);
+  border: 1px solid var(--primary);
+  border-radius: var(--radius);
+  font-family: 'Public Sans', sans-serif;
+  font-size: .82rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+  transition: background .15s, color .15s;
+}
+
+.btn-outline:hover { background: var(--primary); color: #fff; }
+
+/* ── Cards de métrica ─────────────────────────────────── */
+.tse-metrics {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 1.25rem;
+}
+
+.tse-metric {
+  flex: 1;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  box-shadow: var(--shadow);
+}
+
+.tse-metric-value {
+  font-feature-settings: "tnum";
+  font-size: 2rem;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--ink);
+}
+
+.tse-metric-value.eleito { color: var(--eleito); }
+
+.tse-metric-label {
+  font-size: .72rem;
+  font-weight: 600;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+/* ── Tabelas ──────────────────────────────────────────── */
+.tse-table-wrap {
+  overflow-x: auto;
+  margin-bottom: 1rem;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: .85rem;
+}
+
+th {
+  background: var(--primary);
+  color: #fff;
+  text-align: left;
+  padding: 9px 12px;
+  font-weight: 600;
+  font-size: .75rem;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+td {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  color: var(--ink);
+}
+
+tr:last-child td { border-bottom: none; }
+
+tbody tr:nth-child(even) { background: #fafaf8; }
+
+/* ── Badges ───────────────────────────────────────────── */
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-size: .72rem;
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.badge-eleito   { background: #D1F5E0; color: var(--eleito);  border: 1px solid #A8E6C1; }
+.badge-suplente { background: #EFF3F6; color: #4A5568;        border: 1px solid var(--border); }
+.badge-naoel    { background: #FEF3E6; color: #8B4500;        border: 1px solid #F5CBА8; }
+.badge-reeleicao{ background: #FEF3E6; color: var(--accent);  border: 1px solid #F5D59A; }
+
+/* ── Detalhes (não eleitos / suplências) ──────────────── */
+details {
+  margin-top: .75rem;
+}
+
+details summary {
+  cursor: pointer;
+  font-size: .82rem;
+  font-weight: 600;
+  color: var(--muted);
+  padding: 6px 0;
+  list-style: none;
+  user-select: none;
+}
+
+details summary::before {
+  content: '▶ ';
+  font-size: .65rem;
+}
+
+details[open] summary::before { content: '▼ '; }
+
+/* ── Linha do tempo de mandatos ───────────────────────── */
+.tse-timeline {
+  position: relative;
+  padding-left: 36px;
+  margin: .5rem 0 1rem;
+}
+
+.tse-timeline::before {
+  content: '';
+  position: absolute;
+  left: 14px;
+  top: 8px;
+  bottom: 8px;
+  width: 2px;
+  background: var(--border);
+}
+
+.tse-tl-item {
+  position: relative;
+  margin-bottom: 16px;
+}
+
+.tse-tl-item::before {
+  content: '';
+  position: absolute;
+  left: -26px;
+  top: 10px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--primary);
+  border: 2px solid var(--paper);
+  box-shadow: 0 0 0 2px var(--primary);
+}
+
+.tse-tl-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  box-shadow: var(--shadow);
+}
+
+.tse-tl-ano {
+  font-family: 'Fraunces', serif;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--primary);
+  margin-bottom: 6px;
+}
+
+.tse-tl-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  font-size: .82rem;
+  color: var(--muted);
+}
+
+.tse-tl-periodo {
+  font-feature-settings: "tnum";
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.tse-tl-partido {
+  background: #EFF3F6;
+  color: var(--ink);
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-weight: 600;
+  font-size: .72rem;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  border: 1px solid var(--border);
+}
+
+/* ── Callouts ─────────────────────────────────────────── */
+.tse-callout {
+  padding: 12px 14px;
+  border-radius: var(--radius);
+  font-size: .85rem;
+  margin: .75rem 0;
+}
+
+.tse-callout-warn {
+  background: #FEF3E6;
+  border-left: 3px solid var(--accent);
+  color: #7A4000;
+}
+
+.tse-callout-info {
+  background: #EFF6FF;
+  border-left: 3px solid #3B82F6;
+  color: #1E3A5F;
+}
+
+.tse-callout-erro {
+  background: #FEF0F0;
+  border-left: 3px solid #E53E3E;
+  color: #742A2A;
+}
+
+/* ── Spinner ──────────────────────────────────────────── */
+.tse-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--border);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+  vertical-align: middle;
+  margin-right: 6px;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Rodapé ───────────────────────────────────────────── */
+.tse-footer {
+  margin-top: 2.5rem;
+  padding-top: .75rem;
+  border-top: 1px solid var(--border);
+  font-size: .72rem;
+  color: var(--muted);
+  text-align: center;
+  line-height: 1.6;
+}
+
+/* ── Subheadings ──────────────────────────────────────── */
+.tse-subhead {
+  font-family: 'Fraunces', serif;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--primary);
+  margin: 1.25rem 0 .6rem;
+}
+
+/* ── Toolbar de resultados ────────────────────────────── */
+.tse-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: .75rem;
+}
+
+/* ── Responsive ───────────────────────────────────────── */
+@media (max-width: 560px) {
+  .tse-metrics { flex-direction: column; }
+  .tse-form    { flex-direction: column; }
+  .tse-field   { min-width: 0; }
+}

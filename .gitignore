@@ -7,3 +7,4 @@ cache/
 .env
 .streamlit/secrets.toml
 *.xlsx
+.hive/

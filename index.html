@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ferramenta TSE</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗳️</text></svg>" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="tse-header">
+    <div class="tse-header-icon">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+        stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="11" width="18" height="11" rx="2"/>
+        <path d="M3 11V7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4"/>
+        <line x1="12" y1="3" x2="12" y2="7"/>
+        <line x1="8" y1="5" x2="8" y2="7"/>
+        <line x1="16" y1="5" x2="16" y2="7"/>
+      </svg>
+    </div>
+    <div class="tse-header-text">
+      <h1>Ferramenta TSE</h1>
+      <p>Consulta de eleitos e mandatos &middot; Goiás &middot; MPGO</p>
+    </div>
+  </header>
+
+  <!-- Abas -->
+  <div class="tse-tabs" role="tablist">
+    <button class="tse-tab" role="tab" aria-selected="true" data-tab="listar">Listar candidatos</button>
+    <button class="tse-tab" role="tab" aria-selected="false" data-tab="rastrear">Rastrear mandatos</button>
+  </div>
+
+  <!-- Seção: Listar -->
+  <section class="tse-section active" id="tab-listar">
+    <form class="tse-form" id="form-listar" novalidate>
+      <div class="tse-field">
+        <label for="ano-listar">Ano</label>
+        <select id="ano-listar" required></select>
+      </div>
+      <div class="tse-field">
+        <label for="municipio-listar">Município</label>
+        <select id="municipio-listar" required></select>
+      </div>
+      <div class="tse-field">
+        <label for="cargo-listar">Cargo</label>
+        <select id="cargo-listar">
+          <option value="Vereador">Vereador</option>
+          <option value="Prefeito">Prefeito</option>
+        </select>
+      </div>
+      <button type="submit" class="btn-primary">Pesquisar</button>
+    </form>
+
+    <div id="resultado-listar"></div>
+  </section>
+
+  <!-- Seção: Rastrear -->
+  <section class="tse-section" id="tab-rastrear">
+    <form class="tse-form" id="form-rastrear" novalidate>
+      <div class="tse-field">
+        <label for="municipio-rastrear">Município</label>
+        <select id="municipio-rastrear" required></select>
+      </div>
+      <div class="tse-field">
+        <label for="cargo-rastrear">Cargo</label>
+        <select id="cargo-rastrear">
+          <option value="Prefeito">Prefeito</option>
+          <option value="Vereador">Vereador</option>
+        </select>
+      </div>
+      <div class="tse-field" style="flex: 2; min-width: 200px">
+        <label for="nome-rastrear">Nome do candidato</label>
+        <input type="text" id="nome-rastrear" placeholder="Ex: CLAUDIO HENRIQUE (parcial ou completo)" required />
+      </div>
+      <button type="submit" class="btn-primary">Rastrear</button>
+    </form>
+
+    <div id="resultado-rastrear"></div>
+  </section>
+
+  <!-- Rodapé -->
+  <footer class="tse-footer" id="rodape">
+    Fonte: TSE Dados Abertos &mdash; consulta_cand
+  </footer>
+
+  <script src="/app.js"></script>
+</body>
+</html>
