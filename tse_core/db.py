@@ -32,7 +32,8 @@ def criar_schema(db_path: str = None) -> None:
                 nm_candidato  TEXT    NOT NULL,
                 nm_urna       TEXT,
                 sg_partido    TEXT,
-                situacao_turno TEXT
+                situacao_turno TEXT,
+                situacao_candidatura TEXT
             );
 
             CREATE INDEX IF NOT EXISTS idx_ano_mun_cargo

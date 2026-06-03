@@ -17,11 +17,17 @@ def _normalizar(texto: str) -> str:
     return "".join(c for c in nfkd if not unicodedata.combining(c))
 
 
-def _situacao_label(valor: str | None) -> str:
-    """Normaliza marcadores nulos ilegíveis do TSE (ex.: '#NULO#') para exibição."""
-    if not valor or valor.strip("#").upper() in ("NULO", "NE"):
-        return "SEM INFO"
-    return valor
+def _situacao_label(situacao_turno: str | None, situacao_cand: str | None = None) -> str:
+    """
+    Rótulo de exibição da situação. Quando houve totalização, usa o resultado
+    (ELEITO/NÃO ELEITO/SUPLENTE). Quando não houve (#NULO), usa a situação do
+    registro vinda da API (Indeferido/Renúncia); senão, 'Sem totalização'.
+    """
+    if situacao_turno and situacao_turno.strip("#").upper() not in ("NULO", "NE", ""):
+        return situacao_turno
+    if situacao_cand:
+        return situacao_cand
+    return "Sem totalização"
 
 
 def _casa_nome(alvo: str, nm: str, nu: str) -> bool:
@@ -103,7 +109,7 @@ def listar(
 
     rows = conn.execute(
         """
-        SELECT nm_candidato, nm_urna, sg_partido, situacao_turno, ds_cargo, sq_candidato
+        SELECT nm_candidato, nm_urna, sg_partido, situacao_turno, ds_cargo, sq_candidato, situacao_candidatura
         FROM candidatura
         WHERE ano = ? AND uf = ? AND cd_municipio = ? AND cd_cargo = ?
         ORDER BY
@@ -131,7 +137,7 @@ def listar(
             "nome": row["nm_candidato"],
             "urna": row["nm_urna"],
             "partido": row["sg_partido"],
-            "situacao": _situacao_label(row["situacao_turno"]),
+            "situacao": _situacao_label(row["situacao_turno"], row["situacao_candidatura"]),
             "eleito": (row["situacao_turno"] or "") in _SITUACOES_ELEITO
                       or _normalizar(row["situacao_turno"] or "").startswith("ELEITO"),
             "sq_candidato": row["sq_candidato"],
@@ -193,7 +199,7 @@ def rastrear(
 
     for ano in anos_busca:
         rows = conn.execute(
-            "SELECT nm_candidato, nm_urna, sg_partido, situacao_turno, sq_candidato "
+            "SELECT nm_candidato, nm_urna, sg_partido, situacao_turno, sq_candidato, situacao_candidatura "
             "FROM candidatura "
             "WHERE ano = ? AND uf = ? AND cd_municipio = ? AND cd_cargo = ?",
             (ano, uf.upper(), cd_municipio, cd_cargo),
@@ -209,7 +215,7 @@ def rastrear(
                     "nome": row["nm_candidato"],
                     "urna": row["nm_urna"],
                     "partido": row["sg_partido"],
-                    "situacao": _situacao_label(row["situacao_turno"]),
+                    "situacao": _situacao_label(row["situacao_turno"], row["situacao_candidatura"]),
                     "eleito": (row["situacao_turno"] or "") in _SITUACOES_ELEITO
                               or _normalizar(row["situacao_turno"] or "").startswith("ELEITO"),
                     "sq_candidato": row["sq_candidato"],

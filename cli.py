@@ -66,6 +66,11 @@ def cmd_ingest(args):
         print(f"  [OK] {ano}/{args.uf.upper()}: {total} registros")
 
 
+def cmd_enriquecer(args):
+    from tse_core.ingest import enriquecer_situacao
+    enriquecer_situacao(uf=args.uf)
+
+
 def cmd_listar(args):
     from tse_core.consulta import listar
     try:
@@ -121,6 +126,10 @@ def main():
     p_ingest.add_argument("--anos", nargs="+", type=int, required=True, metavar="ANO")
     p_ingest.add_argument("--uf", default="GO")
 
+    # enriquecer
+    p_enr = sub.add_parser("enriquecer", help="Busca situação (Indeferido/Renúncia) dos #NULO via API do TSE")
+    p_enr.add_argument("--uf", default="GO")
+
     # listar
     p_listar = sub.add_parser("listar", help="Lista candidatos por municipio/cargo/ano")
     p_listar.add_argument("--municipio", required=True)
@@ -136,7 +145,7 @@ def main():
     p_rastrear.add_argument("--cargo", required=True)
 
     args = parser.parse_args()
-    dispatch = {"ingest": cmd_ingest, "listar": cmd_listar, "rastrear": cmd_rastrear}
+    dispatch = {"ingest": cmd_ingest, "enriquecer": cmd_enriquecer, "listar": cmd_listar, "rastrear": cmd_rastrear}
     dispatch[args.cmd](args)
 
 
