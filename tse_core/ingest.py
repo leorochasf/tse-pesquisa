@@ -28,6 +28,7 @@ _COL_MAP = {
     "CD_CARGO":           "cd_cargo",
     "DS_CARGO":           "ds_cargo",
     "NR_CPF_CANDIDATO":   "nr_cpf",
+    "SQ_CANDIDATO":       "sq_candidato",
     "NM_CANDIDATO":       "nm_candidato",
     "NM_URNA_CANDIDATO":  "nm_urna",
     "SG_PARTIDO":         "sg_partido",
@@ -37,10 +38,10 @@ _COL_MAP = {
 _INSERT = """
     INSERT INTO candidatura
         (ano, uf, cd_municipio, nm_municipio, cd_cargo, ds_cargo,
-         nr_cpf, nm_candidato, nm_urna, sg_partido, situacao_turno)
+         nr_cpf, sq_candidato, nm_candidato, nm_urna, sg_partido, situacao_turno)
     VALUES
         (:ano, :uf, :cd_municipio, :nm_municipio, :cd_cargo, :ds_cargo,
-         :nr_cpf, :nm_candidato, :nm_urna, :sg_partido, :situacao_turno)
+         :nr_cpf, :sq_candidato, :nm_candidato, :nm_urna, :sg_partido, :situacao_turno)
 """
 
 

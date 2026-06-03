@@ -28,6 +28,7 @@ def criar_schema(db_path: str = None) -> None:
                 cd_cargo      TEXT    NOT NULL,
                 ds_cargo      TEXT    NOT NULL,
                 nr_cpf        TEXT,
+                sq_candidato  TEXT,
                 nm_candidato  TEXT    NOT NULL,
                 nm_urna       TEXT,
                 sg_partido    TEXT,

@@ -269,6 +269,7 @@ tbody tr:nth-child(even) { background: #fafaf8; }
 .badge-suplente { background: #EFF3F6; color: #4A5568;        border: 1px solid var(--border); }
 .badge-naoel    { background: #FEF3E6; color: #8B4500;        border: 1px solid #F5CBА8; }
 .badge-reeleicao{ background: #FEF3E6; color: var(--accent);  border: 1px solid #F5D59A; }
+.badge-atual    { background: #D1F5E0; color: var(--eleito);  border: 1px solid #A8E6C1; }
 
 /* ── Detalhes (não eleitos / suplências) ──────────────── */
 details {
@@ -435,25 +436,22 @@ details[open] summary::before { content: '▼ '; }
 .tse-toolbar {
   display: flex;
   justify-content: flex-end;
-  gap: 8px;
   margin-bottom: .75rem;
 }
 
-/* ── Link de confirmação TSE ──────────────────────────── */
-.tse-confirm-hint {
-  font-size: .75rem;
-  color: var(--muted);
-  margin-bottom: .75rem;
+/* ── Links do TSE ─────────────────────────────────────── */
+.tse-cand-link {
+  color: var(--primary);
+  text-decoration: none;
+  font-weight: 500;
 }
+
+.tse-cand-link:hover { text-decoration: underline; }
 
 .tse-tl-confirm {
   margin-top: 8px;
   padding-top: 8px;
   border-top: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
 }
 
 .tse-tl-confirm a {
@@ -465,9 +463,9 @@ details[open] summary::before { content: '▼ '; }
 
 .tse-tl-confirm a:hover { text-decoration: underline; }
 
-.tse-tl-confirm-hint {
-  font-size: .72rem;
-  color: var(--muted);
+.tse-tl-card-atual {
+  border-color: var(--eleito);
+  box-shadow: 0 0 0 2px rgba(27,122,75,.15);
 }
 
 /* ── Responsive ───────────────────────────────────────── */

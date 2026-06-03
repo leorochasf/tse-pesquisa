@@ -18,6 +18,8 @@ class Mandato:
     fim: int          # ano de fim (ano_eleicao + 4)
     reeleicao: bool
     partido: str | None
+    sq_candidato: str | None
+    cd_municipio: str | None
 
 
 def inferir_mandatos(resultado_rastrear: dict, duracao: int = 4) -> dict:
@@ -60,6 +62,8 @@ def inferir_mandatos(resultado_rastrear: dict, duracao: int = 4) -> dict:
             fim=ano + duracao,
             reeleicao=reeleicao,
             partido=item["partido"],
+            sq_candidato=item.get("sq_candidato"),
+            cd_municipio=item.get("cd_municipio"),
         ))
 
     return {

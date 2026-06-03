@@ -83,7 +83,7 @@ def listar(
 
     rows = conn.execute(
         """
-        SELECT nm_candidato, nm_urna, sg_partido, situacao_turno, ds_cargo
+        SELECT nm_candidato, nm_urna, sg_partido, situacao_turno, ds_cargo, sq_candidato
         FROM candidatura
         WHERE ano = ? AND uf = ? AND cd_municipio = ? AND cd_cargo = ?
         ORDER BY
@@ -106,6 +106,7 @@ def listar(
         {
             "ano": ano,
             "municipio": nm_municipio,
+            "cd_municipio": cd_municipio,
             "cargo": dict(row)["ds_cargo"],
             "nome": row["nm_candidato"],
             "urna": row["nm_urna"],
@@ -113,6 +114,7 @@ def listar(
             "situacao": row["situacao_turno"] or "SEM INFO",
             "eleito": (row["situacao_turno"] or "") in _SITUACOES_ELEITO
                       or _normalizar(row["situacao_turno"] or "").startswith("ELEITO"),
+            "sq_candidato": row["sq_candidato"],
         }
         for row in rows
     ]
@@ -171,7 +173,7 @@ def rastrear(
 
     for ano in anos_busca:
         rows = conn.execute(
-            "SELECT nm_candidato, nm_urna, sg_partido, situacao_turno "
+            "SELECT nm_candidato, nm_urna, sg_partido, situacao_turno, sq_candidato "
             "FROM candidatura "
             "WHERE ano = ? AND uf = ? AND cd_municipio = ? AND cd_cargo = ?",
             (ano, uf.upper(), cd_municipio, cd_cargo),
@@ -190,6 +192,8 @@ def rastrear(
                     "situacao": row["situacao_turno"] or "SEM INFO",
                     "eleito": (row["situacao_turno"] or "") in _SITUACOES_ELEITO
                               or _normalizar(row["situacao_turno"] or "").startswith("ELEITO"),
+                    "sq_candidato": row["sq_candidato"],
+                    "cd_municipio": cd_municipio,
                 })
 
     return {

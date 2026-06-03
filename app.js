@@ -13,6 +13,12 @@ function tseUrl(ano) {
   return cd ? `${_TSE_BASE}#/candidato/CENTRO-OESTE/GO/${cd}` : '';
 }
 
+function tseCandidatoUrl(ano, sq, cdMun) {
+  const cd = _TSE_CD[ano];
+  return (cd && sq && cdMun)
+    ? `${_TSE_BASE}#/candidato/CENTRO-OESTE/GO/${cd}/${sq}/${ano}/${cdMun}` : '';
+}
+
 // ── Utilitários ───────────────────────────────────────────────────────────────
 
 async function apiFetch(params) {
@@ -37,7 +43,7 @@ function spinner() {
 }
 
 function badge(text, kind = 'suplente') {
-  const map = { eleito: 'badge-eleito', suplente: 'badge-suplente', naoel: 'badge-naoel', reeleicao: 'badge-reeleicao' };
+  const map = { eleito: 'badge-eleito', suplente: 'badge-suplente', naoel: 'badge-naoel', reeleicao: 'badge-reeleicao', atual: 'badge-atual' };
   return `<span class="badge ${map[kind] || 'badge-suplente'}">${text}</span>`;
 }
 
@@ -79,9 +85,10 @@ async function init() {
       apiFetch({ action: 'municipios' }),
     ]);
 
-    // aba Listar
+    // aba Listar — anos em ordem crescente (2012→2024), 2024 pré-selecionado
     const selAno = document.getElementById('ano-listar');
-    populateSelect(selAno, [...anos].reverse());
+    populateSelect(selAno, anos);
+    selAno.value = String(anos[anos.length - 1]);
 
     // municípios filtrados por ano (atualiza ao mudar ano)
     const selMun = document.getElementById('municipio-listar');
@@ -123,13 +130,19 @@ function situacaoBadge(situacao) {
 
 function renderTabela(candidatos, title) {
   if (!candidatos.length) return '';
-  const rows = candidatos.map(c => `
+  const rows = candidatos.map(c => {
+    const url = tseCandidatoUrl(c.ano, c.sq_candidato, c.cd_municipio);
+    const nomeCell = url
+      ? `<a class="tse-cand-link" href="${url}" target="_blank" rel="noopener">${c.nome}</a>`
+      : c.nome;
+    return `
     <tr>
-      <td>${c.nome}</td>
+      <td>${nomeCell}</td>
       <td>${c.urna || ''}</td>
       <td>${c.partido || ''}</td>
       <td>${situacaoBadge(c.situacao)}</td>
-    </tr>`).join('');
+    </tr>`;
+  }).join('');
   return `
     <h3 class="tse-subhead">${title}</h3>
     <div class="tse-table-wrap">
@@ -174,15 +187,12 @@ document.getElementById('form-listar').addEventListener('submit', async e => {
         </div>
       </div>`;
 
-    // Botão Excel + link TSE
+    // Botão Excel
     const excelUrl = `${API}?action=excel&ano=${encodeURIComponent(ano)}&municipio=${encodeURIComponent(municipio)}&cargo=${encodeURIComponent(cargo)}`;
-    const tseHref = tseUrl(Number(ano));
     out.innerHTML += `
       <div class="tse-toolbar">
         <a class="btn-outline" href="${excelUrl}" download>⬇ Baixar Excel</a>
-        ${tseHref ? `<a class="btn-outline" href="${tseHref}" target="_blank" rel="noopener">🔗 Confirmar no TSE</a>` : ''}
-      </div>
-      ${tseHref ? `<p class="tse-confirm-hint">No site do TSE, selecione <strong>${municipio}</strong> e <strong>${cargo}</strong>.</p>` : ''}`;
+      </div>`;
 
     // Eleitos
     if (eleitos.length) out.innerHTML += renderTabela(eleitos, 'Eleitos');
@@ -205,21 +215,23 @@ document.getElementById('form-listar').addEventListener('submit', async e => {
 
 function renderTimeline(mandatos, municipio, cargo) {
   if (!mandatos.length) return '<div class="tse-callout tse-callout-info">Nenhum mandato registrado.</div>';
-  const items = mandatos.map(m => {
+  const anoAtual = new Date().getFullYear();
+  const items = [...mandatos].reverse().map(m => {
+    const ehAtual = anoAtual >= m.inicio && anoAtual <= m.fim;
     const reeleicaoHtml = m.reeleicao ? `&nbsp;${badge('Reeleição', 'reeleicao')}` : '';
+    const atualHtml = ehAtual ? `&nbsp;${badge('Mandato atual', 'atual')}` : '';
     const partidoHtml = m.partido ? `<span class="tse-tl-partido">${m.partido}</span>` : '';
-    const tseHref = tseUrl(m.ano_eleicao);
-    const tseConfirm = tseHref ? `
+    const tseHref = tseCandidatoUrl(m.ano_eleicao, m.sq_candidato, m.cd_municipio);
+    const tseLink = tseHref ? `
       <div class="tse-tl-confirm">
-        <a href="${tseHref}" target="_blank" rel="noopener">🔗 Eleição ${m.ano_eleicao} no TSE</a>
-        <span class="tse-tl-confirm-hint">Selecione ${municipio} / ${cargo}</span>
+        <a href="${tseHref}" target="_blank" rel="noopener">🔗 Ver ficha no TSE</a>
       </div>` : '';
     return `
       <div class="tse-tl-item">
-        <div class="tse-tl-card">
-          <div class="tse-tl-ano">Eleição ${m.ano_eleicao}${reeleicaoHtml}</div>
+        <div class="tse-tl-card${ehAtual ? ' tse-tl-card-atual' : ''}">
+          <div class="tse-tl-ano">Eleição ${m.ano_eleicao}${reeleicaoHtml}${atualHtml}</div>
           <div class="tse-tl-row">${partidoHtml}<span class="tse-tl-periodo">${m.inicio}&ndash;${m.fim}</span></div>
-          ${tseConfirm}
+          ${tseLink}
         </div>
       </div>`;
   }).join('');
