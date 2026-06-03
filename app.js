@@ -8,11 +8,6 @@ const API = '/api/index';
 const _TSE_BASE = 'https://divulgacandcontas.tse.jus.br/divulga/';
 const _TSE_CD = { 2024: '2045202024', 2020: '2030402020', 2016: '2', 2012: '1699' };
 
-function tseUrl(ano) {
-  const cd = _TSE_CD[ano];
-  return cd ? `${_TSE_BASE}#/candidato/CENTRO-OESTE/GO/${cd}` : '';
-}
-
 function tseCandidatoUrl(ano, sq, cdMun) {
   const cd = _TSE_CD[ano];
   return (cd && sq && cdMun)
