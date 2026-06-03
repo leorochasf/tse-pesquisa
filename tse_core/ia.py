@@ -91,7 +91,10 @@ def montar_contexto_pessoa(nome: str, municipio: str, cargo: str) -> dict:
     if not mandatos and not inf["suplencias"] and not inf["sem_eleicao"]:
         raise ValueError(f"Nenhum registro encontrado para {nome} em {municipio}/{cargo}.")
 
+    import datetime
+    hoje = datetime.date.today()
     linhas = [
+        f"Data de referência (hoje): {hoje.isoformat()} (ano atual: {hoje.year})",
         f"Pessoa: {nome.upper()}",
         f"CPF: {inf.get('cpf') or 'não disponível'}",
         f"Município/Cargo: {inf['municipio']} / {inf['cargo']}",
@@ -101,9 +104,9 @@ def montar_contexto_pessoa(nome: str, municipio: str, cargo: str) -> dict:
     for m in mandatos:
         p = m.get("prescricao") or {}
         presc = {
-            "prescrito": f"prescrição provável (≈{p.get('ref_ano')})",
-            "no_prazo": f"no prazo (≈{p.get('ref_ano')})",
-            "verificar": "verificar (nova LIA)",
+            "prescrito": f"PROVAVELMENTE JÁ PRESCRITO (prazo estimado ~{p.get('ref_ano')}, já ultrapassado em {hoje.year})",
+            "no_prazo": f"ainda no prazo (prescrição estimada ~{p.get('ref_ano')})",
+            "verificar": "verificar (nova LIA — depende da data do ato, que não temos)",
         }.get(p.get("status"), "—")
         reel = " [reeleição]" if m["reeleicao"] else ""
         linhas.append(f"  - Eleito {m['ano_eleicao']} ({m['partido']}), mandato {m['inicio']}-{m['fim']}{reel}; prescrição: {presc}")
