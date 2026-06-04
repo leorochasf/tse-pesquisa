@@ -535,8 +535,6 @@ document.getElementById('form-rastrear').addEventListener('submit', async e => {
         <button type="button" class="btn-outline" id="btn-patrimonio">📋 Ver ficha (situação + bens)</button>
         <div id="patrimonio-out"></div>
       </div>`;
-    const btnPat = document.getElementById('btn-patrimonio');
-    if (btnPat) btnPat.addEventListener('click', () => carregarPatrimonio(data, btnPat));
 
     // Parecer de triagem (IA) — sob demanda
     out.innerHTML += `
@@ -544,6 +542,8 @@ document.getElementById('form-rastrear').addEventListener('submit', async e => {
         <button type="button" class="btn-outline" id="btn-parecer">🤖 Gerar parecer (IA)</button>
         <div id="parecer-out"></div>
       </div>`;
+    const btnPat = document.getElementById('btn-patrimonio');
+    if (btnPat) btnPat.addEventListener('click', () => carregarPatrimonio(data, btnPat));
     const btnParecer = document.getElementById('btn-parecer');
     if (btnParecer) btnParecer.addEventListener('click', () => gerarParecer({ nome, municipio, cargo }, btnParecer));
 
