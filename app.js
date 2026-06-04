@@ -325,9 +325,26 @@ function formatTextoIA(t) {
   return `<div class="tse-ia-texto">${html}</div>`;
 }
 
+const PARECER_COOLDOWN = 30; // segundos entre gerações, para evitar uso excessivo
+
+function iniciarCooldown(btn, label) {
+  let t = PARECER_COOLDOWN;
+  btn.disabled = true;
+  const tick = () => {
+    if (t <= 0) { btn.disabled = false; btn.textContent = label; return; }
+    btn.textContent = `⏳ Aguarde ${t}s`;
+    t -= 1;
+    setTimeout(tick, 1000);
+  };
+  tick();
+}
+
 async function gerarParecer(q, btn) {
+  const label = btn.dataset.label || btn.textContent;
+  btn.dataset.label = label;
   const panel = document.getElementById('parecer-out');
   btn.disabled = true;
+  btn.textContent = '⏳ Gerando…';
   panel.innerHTML = '';
   panel.appendChild(spinner());
   panel.appendChild(document.createTextNode(' Gerando parecer com IA…'));
@@ -339,11 +356,12 @@ async function gerarParecer(q, btn) {
         ${formatTextoIA(parecer)}
         <p class="tse-ia-aviso">Apoio à triagem gerado por IA com base apenas nos dados coletados — não substitui análise jurídica. Confira antes de usar.</p>
       </div>`;
+    iniciarCooldown(btn, label);  // bloqueia o botão por alguns segundos
   } catch (err) {
     panel.innerHTML = '';
     panel.appendChild(callout(err.message, 'erro'));
-  } finally {
     btn.disabled = false;
+    btn.textContent = label;
   }
 }
 

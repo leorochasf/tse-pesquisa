@@ -98,17 +98,6 @@ def _action_ficha(params: dict) -> dict:
     return buscar_ficha(ano, municipio, sq)
 
 
-def _action_ia_status(params: dict) -> dict:
-    """Diagnóstico: diz se a chave/modelo chegaram à função (sem expor a chave)."""
-    from tse_core.ia import _get_secret, _MODEL_PADRAO
-    chave = _get_secret("OPENROUTER_API_KEY")
-    return {
-        "configurada": bool(chave),
-        "prefixo": (chave[:7] + "…") if chave else None,
-        "modelo": _get_secret("OPENROUTER_MODEL") or _MODEL_PADRAO,
-    }
-
-
 def _action_parecer(params: dict) -> dict:
     from tse_core.ia import montar_contexto_pessoa, chamar_openrouter, _SISTEMA
     ctx = montar_contexto_pessoa(params["nome"][0], params["municipio"][0], params["cargo"][0])
@@ -143,7 +132,6 @@ _ACTIONS = {
     "rastrear": _action_rastrear,
     "ficha": _action_ficha,
     "parecer": _action_parecer,
-    "ia_status": _action_ia_status,
 }
 
 
